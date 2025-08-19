@@ -38,8 +38,10 @@ export const projectSchema = z.object({
   description: z.string().optional(),
   ownerId: z.string(),
   color: z.string().default("#7C3AED"),
+  status: z.enum(["active", "completed", "archived"]).default("active"),
   driveFileId: z.string(), // Google Drive file ID for project data
   allowedEmails: z.array(z.string().email()), // Email allowlist for team members
+  memberEmails: z.array(z.string().email()).default([]), // Alternative name for compatibility
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -48,6 +50,7 @@ export type Project = z.infer<typeof projectSchema>;
 export const insertProjectSchema = projectSchema.omit({
   id: true,
   driveFileId: true,
+  memberEmails: true,
   createdAt: true,
   updatedAt: true,
 });

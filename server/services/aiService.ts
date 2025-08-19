@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { storage } from "../storage";
-import type { InsertAiSuggestion, Task, Project } from "@shared/schema";
+import type { InsertAiSuggestion, Task, Project } from "../../shared/schema.js";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 

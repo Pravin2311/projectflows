@@ -41,7 +41,7 @@ interface CreateProjectForm {
 }
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user } = useAuth() as { user: any };
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -65,10 +65,7 @@ export default function Dashboard() {
   // Create project mutation
   const createProjectMutation = useMutation({
     mutationFn: async (projectData: CreateProjectForm) => {
-      return await apiRequest("/api/projects", {
-        method: "POST",
-        body: JSON.stringify(projectData),
-      });
+      return await apiRequest("POST", "/api/projects", projectData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });

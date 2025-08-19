@@ -15,7 +15,7 @@ import {
   type InsertAiSuggestion,
   type SubscriptionPlan,
   type UsageTracking,
-} from "@shared/schema";
+} from "../shared/schema.js";
 import { randomUUID } from "crypto";
 
 // Interface for storage operations

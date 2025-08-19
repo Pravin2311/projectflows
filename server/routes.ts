@@ -17,7 +17,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
-import { insertProjectSchema, insertTaskSchema, insertCommentSchema } from "@shared/schema";
+import { insertProjectSchema, insertTaskSchema, insertCommentSchema } from "../shared/schema.js";
 import { z } from "zod";
 
 import session from 'express-session';
@@ -62,7 +62,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         firstName: 'Development',
         lastName: 'User',
         profileImageUrl: null,
-        subscriptionTier: 'free'
+        subscriptionTier: 'free' as const
       };
 
       // Store in session
@@ -70,11 +70,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.user = mockUser;
       
       // Store in database
-      await storage.upsertUser({
-        ...mockUser,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
+      await storage.upsertUser(mockUser);
 
       res.json({ success: true, user: mockUser });
     } catch (error) {
@@ -151,8 +147,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { planId } = req.body;
-      const userId = req.user.claims.sub;
-      const userEmail = req.user.claims.email;
+      const userId = req.session.user.id;
+      const userEmail = req.session.user.email;
 
       // Plan pricing
       const planPricing = {
@@ -190,7 +186,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/subscription/activate', isAuthenticated, async (req: any, res) => {
     try {
       const { paymentIntentId } = req.body;
-      const userId = req.user.claims.sub;
+      const userId = req.session.user.id;
 
       if (!stripe) {
         return res.status(500).json({ message: "Stripe not configured" });
@@ -224,7 +220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/subscription/usage', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.user.id;
       const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
       
       const usage = await storage.getUserUsage(userId, currentMonth);
@@ -238,7 +234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Project routes
   app.post("/api/projects", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.user.id;
       const projectData = insertProjectSchema.parse({
         ...req.body,
         ownerId: userId,
@@ -264,7 +260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/projects", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.user.id;
       const projects = await storage.getUserProjects(userId);
       res.json(projects);
     } catch (error) {
@@ -275,7 +271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/projects/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.user.id;
       const projectId = req.params.id;
       
       // Check if user has access to project
@@ -299,7 +295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Project member routes
   app.get("/api/projects/:id/members", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.user.id;
       const projectId = req.params.id;
       
       // Check if user has access to project
@@ -318,7 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/projects/:id/members", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.user.id;
       const projectId = req.params.id;
       const { email, role = "member" } = req.body;
       
@@ -361,7 +357,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Task routes
   app.post("/api/projects/:projectId/tasks", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.user.id;
       const projectId = req.params.projectId;
       
       // Check if user has access to project
@@ -396,7 +392,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/projects/:projectId/tasks", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.user.id;
       const projectId = req.params.projectId;
       
       // Check if user has access to project
@@ -415,7 +411,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/tasks/:id", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.user.id;
       const taskId = req.params.id;
       
       const task = await storage.getTask(taskId);
@@ -457,7 +453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Activity routes
   app.get("/api/projects/:projectId/activities", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.user.id;
       const projectId = req.params.projectId;
       const limit = parseInt(req.query.limit as string) || 20;
       
@@ -478,7 +474,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI routes
   app.post("/api/projects/:projectId/ai/analyze", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.user.id;
       const projectId = req.params.projectId;
       
       // Check if user has access to project
@@ -497,7 +493,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/projects/:projectId/ai/suggestions", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.user.id;
       const projectId = req.params.projectId;
       
       // Check if user has access to project
@@ -533,7 +529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard stats route
   app.get("/api/projects/:projectId/stats", isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.user.id;
       const projectId = req.params.projectId;
       
       // Check if user has access to project
