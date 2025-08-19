@@ -31,14 +31,14 @@ import type { Project, Task } from "@shared/schema";
 interface TaskForm {
   title: string;
   description: string;
-  status: "todo" | "in-progress" | "done";
+  status: "todo" | "in_progress" | "done";
   priority: "low" | "medium" | "high";
   assignee?: string;
 }
 
 const statusConfig = {
   "todo": { label: "To Do", color: "bg-gray-500", icon: Clock },
-  "in-progress": { label: "In Progress", color: "bg-blue-500", icon: AlertCircle },
+  "in_progress": { label: "In Progress", color: "bg-blue-500", icon: AlertCircle },
   "done": { label: "Done", color: "bg-green-500", icon: CheckCircle }
 };
 
@@ -99,13 +99,16 @@ export default function ProjectPage() {
   // Update task status mutation
   const updateTaskMutation = useMutation({
     mutationFn: async ({ taskId, updates }: { taskId: string; updates: Partial<Task> }) => {
-      return await apiRequest("PATCH", `/api/tasks/${taskId}`, updates);
+      console.log("Updating task:", taskId, "with updates:", updates);
+      const response = await apiRequest("PATCH", `/api/tasks/${taskId}`, updates);
+      return response;
     },
     onSuccess: () => {
+      console.log("Task update successful, invalidating cache...");
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/tasks`] });
       toast({
         title: "Task updated",
-        description: "Task has been updated successfully.",
+        description: "Task status changed successfully.",
       });
     },
     onError: (error: Error) => {
@@ -129,13 +132,14 @@ export default function ProjectPage() {
     createTaskMutation.mutate(taskForm);
   };
 
-  const handleUpdateTaskStatus = (taskId: string, status: "todo" | "in-progress" | "done") => {
+  const handleUpdateTaskStatus = (taskId: string, status: "todo" | "in_progress" | "done") => {
+    console.log("Status update clicked:", taskId, "->", status);
     updateTaskMutation.mutate({ taskId, updates: { status } });
   };
 
   const tasksByStatus = {
     "todo": tasks.filter(task => task.status === "todo"),
-    "in-progress": tasks.filter(task => task.status === "in-progress"),
+    "in_progress": tasks.filter(task => task.status === "in_progress"),
     "done": tasks.filter(task => task.status === "done")
   };
 
@@ -229,11 +233,11 @@ export default function ProjectPage() {
                           id="task-status"
                           data-testid="select-task-status"
                           value={taskForm.status}
-                          onChange={(e) => setTaskForm(prev => ({ ...prev, status: e.target.value as "todo" | "in-progress" | "done" }))}
+                          onChange={(e) => setTaskForm(prev => ({ ...prev, status: e.target.value as "todo" | "in_progress" | "done" }))}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white dark:bg-gray-800 dark:border-gray-600"
                         >
                           <option value="todo">To Do</option>
-                          <option value="in-progress">In Progress</option>
+                          <option value="in_progress">In Progress</option>
                           <option value="done">Done</option>
                         </select>
                       </div>
@@ -355,11 +359,11 @@ export default function ProjectPage() {
                                 ← To Do
                               </Button>
                             )}
-                            {status !== "in-progress" && (
+                            {status !== "in_progress" && (
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleUpdateTaskStatus(task.id, "in-progress")}
+                                onClick={() => handleUpdateTaskStatus(task.id, "in_progress")}
                                 className="h-6 px-2 text-xs"
                               >
                                 {status === "todo" ? "Start →" : "← In Progress"}
