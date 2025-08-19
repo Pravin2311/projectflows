@@ -235,10 +235,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.session.user.id;
-      const projectData = insertProjectSchema.parse({
+      const baseData = {
         ...req.body,
         ownerId: userId,
-      });
+        allowedEmails: req.body.allowedEmails || [req.session.user.email], // Default to owner's email
+      };
+      
+      const projectData = insertProjectSchema.parse(baseData);
       
       const project = await storage.createProject(projectData);
       

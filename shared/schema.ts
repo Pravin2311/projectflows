@@ -40,7 +40,7 @@ export const projectSchema = z.object({
   color: z.string().default("#7C3AED"),
   status: z.enum(["active", "completed", "archived"]).default("active"),
   driveFileId: z.string(), // Google Drive file ID for project data
-  allowedEmails: z.array(z.string().email()), // Email allowlist for team members
+  allowedEmails: z.array(z.string().email()).optional().default([]), // Email allowlist for team members
   memberEmails: z.array(z.string().email()).default([]), // Alternative name for compatibility
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
