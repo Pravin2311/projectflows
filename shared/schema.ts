@@ -15,7 +15,7 @@ export const userSchema = z.object({
   firstName: z.string().optional(),
   lastName: z.string().optional(),
   profileImageUrl: z.string().optional(),
-  subscriptionTier: z.enum(["free", "managed_api", "premium"]).default("free"),
+  subscriptionTier: z.enum(["free", "premium"]).default("free"),
   subscriptionStatus: z.enum(["active", "cancelled", "expired"]).optional(),
   subscriptionExpiry: z.string().datetime().optional(),
   stripeCustomerId: z.string().optional(), // Stripe customer ID

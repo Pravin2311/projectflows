@@ -2,16 +2,16 @@
 
 ## Overview
 
-This is a completely free project management platform built with React and Express.js that uses Google Drive for data storage instead of traditional databases. Users provide their own Google API credentials to keep the platform 100% free while maintaining complete control over their data. The platform offers comprehensive project management capabilities including kanban boards, task tracking, team collaboration, and AI-powered insights using Google's Gemini AI. All project data is stored securely in the user's own Google Drive, ensuring privacy and zero hosting costs. Monetization is handled through Stripe for reliable subscription processing while keeping all user data in Google Drive.
+This is a completely free project management platform built with React and Express.js that uses Google Drive for data storage instead of traditional databases. Users provide their own Google API credentials to keep the platform 100% free while maintaining complete control over their data. The platform offers comprehensive project management capabilities including kanban boards, task tracking, team collaboration, and AI-powered insights using Google's Gemini AI. All project data is stored securely in the user's own Google Drive, ensuring privacy and zero hosting costs. Optional premium features are available for users who want advanced AI capabilities, but the core platform remains forever free.
 
 ## Recent Changes (August 19, 2025)
 
-### Complete Google + Stripe Monetization System
-- **Stripe Payment Integration**: Built reliable subscription system with Stripe for payment processing
-- **Managed API Service**: $9/month service for users who don't want technical Google API setup
-- **Three-Tier Pricing**: Free (own API keys), Managed API ($9), Premium ($19) with Stripe checkout
-- **Google Data Ownership**: All user data remains in their Google Drive despite Stripe payments
-- **Landing Page Enhancement**: Added prominent Managed API service promotion section
+### Simplified Google-First Architecture  
+- **Removed Managed API Complexity**: Eliminated $9/month Managed API tier to focus on pure Google-first approach
+- **Two-Tier Pricing**: Free (own API keys) and Premium ($19/month) for advanced features only
+- **Enhanced Google Setup**: Improved user onboarding for Google API key setup with clear guidance
+- **Google Data Ownership**: All user data remains in their Google Drive - no third-party dependencies
+- **Landing Page Refocus**: Updated messaging to emphasize completely free platform with Google ownership
 
 ### Google-First Data Architecture
 - **Payment Processing**: Stripe for reliable subscription management (industry standard)
@@ -41,7 +41,7 @@ This is a completely free project management platform built with React and Expre
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
-Business goal: Monetize the platform while maintaining the core value proposition of Google Drive-based data storage.
+Business goal: Focus on completely free Google-first architecture with optional premium features. Avoid complexity that undermines the core free value proposition.
 
 ## System Architecture
 

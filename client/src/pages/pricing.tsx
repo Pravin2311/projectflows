@@ -69,7 +69,6 @@ export default function Pricing() {
   const getPlanIcon = (tier: string) => {
     switch (tier) {
       case "free": return <Star className="h-6 w-6" />;
-      case "managed_api": return <Zap className="h-6 w-6" />;
       case "premium": return <Crown className="h-6 w-6" />;
       default: return <Star className="h-6 w-6" />;
     }
@@ -101,8 +100,8 @@ export default function Pricing() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-3 gap-8 mb-16">
-          {plans.map((plan) => {
+        <div className="grid md:grid-cols-2 gap-8 mb-16 max-w-4xl mx-auto">
+          {plans.filter(plan => plan.id === "free" || plan.id === "premium").map((plan) => {
             const currentTier = getCurrentUserTier();
             const isCurrentPlan = plan.id === currentTier;
             const isUpgrade = plan.id !== "free" && currentTier === "free";
@@ -110,12 +109,12 @@ export default function Pricing() {
             return (
               <Card 
                 key={plan.id} 
-                className={`relative ${plan.id === "managed_api" ? "border-blue-500 shadow-lg scale-105" : ""} ${isCurrentPlan ? "bg-blue-50 dark:bg-blue-900/20" : ""}`}
+                className={`relative ${plan.id === "premium" ? "border-blue-500 shadow-lg scale-105" : ""} ${isCurrentPlan ? "bg-blue-50 dark:bg-blue-900/20" : ""}`}
                 data-testid={`plan-card-${plan.id}`}
               >
-                {plan.id === "managed_api" && (
+                {plan.id === "premium" && (
                   <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-600">
-                    Most Popular
+                    Advanced Features
                   </Badge>
                 )}
                 
@@ -126,9 +125,8 @@ export default function Pricing() {
                   
                   <CardTitle className="text-2xl mb-2">{plan.name}</CardTitle>
                   <CardDescription className="text-lg mb-4">
-                    {plan.id === "free" && "Start with your own Google API keys"}
-                    {plan.id === "managed_api" && "We handle all the technical setup"}
-                    {plan.id === "premium" && "Advanced features and priority support"}
+                    {plan.id === "free" && "Complete project management platform - forever free"}
+                    {plan.id === "premium" && "Advanced AI features and priority support"}
                   </CardDescription>
                   
                   <div className="text-center">

@@ -131,14 +131,22 @@ export default function Landing() {
             </div>
             
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-              Project Management
+              Free Project Management
               <span className="block text-blue-600">Powered by Your Google Drive</span>
             </h1>
             
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-              The only project management platform that stores all your data in your own Google Drive. 
-              Keep complete control while enjoying powerful AI-driven insights powered by Google Gemini.
+              The completely free project management platform that stores all your data in your own Google Drive. 
+              No servers, no subscriptions - just your own Google ecosystem with AI-powered insights.
             </p>
+            
+            <div className="bg-blue-50 rounded-lg p-4 mb-8 max-w-2xl mx-auto">
+              <p className="text-sm text-blue-800">
+                <Settings className="h-4 w-4 inline mr-2" />
+                <strong>Quick Setup Required:</strong> You'll need to create free Google API keys (5 minute setup). 
+                Your data stays 100% in your Google Drive.
+              </p>
+            </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
@@ -159,20 +167,20 @@ export default function Landing() {
                 onClick={() => window.location.href = "/pricing"}
                 data-testid="button-view-pricing"
               >
-                View Pricing
+                View Premium Features
               </Button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Managed API Service Highlight */}
+      {/* Google-First Benefits */}
       <section className="py-16 bg-blue-50 dark:bg-blue-900/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="max-w-4xl mx-auto">
             <div className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-full text-sm font-medium mb-6">
-              <Zap className="h-4 w-4 mr-2" />
-              Most Popular - Managed API Service
+              <Shield className="h-4 w-4 mr-2" />
+              Your Data, Your Rules
             </div>
             
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">

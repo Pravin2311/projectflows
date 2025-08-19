@@ -121,20 +121,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ]
         },
         {
-          id: 'managed_api',
-          name: 'Managed API',
-          amount: 900, // $9.00 in cents
-          currency: 'USD',
-          interval: 'monthly',
-          features: [
-            'Everything in Free',
-            'No Google API setup required',
-            '10x higher API rate limits',
-            'Priority email support',
-            'Advanced Google Drive integration'
-          ]
-        },
-        {
           id: 'premium',
           name: 'Premium',
           amount: 1900, // $19.00 in cents
