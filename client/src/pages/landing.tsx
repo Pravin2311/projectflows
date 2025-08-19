@@ -24,13 +24,27 @@ export default function Landing() {
     const params = new URLSearchParams(window.location.search);
     if (params.get('setup') === 'google') {
       setShowGoogleSetup(true);
-      // Clean up URL
-      window.history.replaceState({}, '', '/');
+      // Don't clean up URL immediately to preserve browser history
     }
+
+    // Handle browser back/forward navigation
+    const handlePopState = () => {
+      const currentParams = new URLSearchParams(window.location.search);
+      if (!currentParams.get('setup')) {
+        setShowGoogleSetup(false);
+      } else if (currentParams.get('setup') === 'google') {
+        setShowGoogleSetup(true);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   const handleLogin = () => {
-    window.location.href = '/api/auth/login';
+    // Instead of server redirect, handle this client-side for better history management
+    setShowGoogleSetup(true);
+    window.history.pushState({}, '', '/?setup=google');
   };
 
   const handleGoogleConfigSubmit = async (config: any) => {
@@ -52,9 +66,28 @@ export default function Landing() {
     }
   };
 
+  // Add a back button handler for Google setup
+  const handleBackToHome = () => {
+    setShowGoogleSetup(false);
+    window.history.back(); // Use browser's back navigation
+  };
+
   // If showing Google setup, render that instead
   if (showGoogleSetup) {
-    return <GoogleConfig onConfigSubmit={handleGoogleConfigSubmit} isLoading={false} />;
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="p-4">
+          <Button 
+            variant="ghost" 
+            onClick={handleBackToHome}
+            className="mb-4"
+          >
+            ← Back to Home
+          </Button>
+        </div>
+        <GoogleConfig onConfigSubmit={handleGoogleConfigSubmit} isLoading={false} />
+      </div>
+    );
   }
 
   return (
