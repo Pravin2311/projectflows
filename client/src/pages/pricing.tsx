@@ -92,10 +92,10 @@ export default function Pricing() {
         {/* Header */}
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-            Choose Your Plan
+            Simple, Transparent Pricing
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            Start free and upgrade when you need more power. All plans include data ownership in your Google Drive.
+            Start completely free. Upgrade to Premium when you want advanced AI features. All plans keep your data in your Google Drive.
           </p>
         </div>
 
@@ -172,18 +172,18 @@ export default function Pricing() {
         {/* Value Propositions */}
         <div className="grid md:grid-cols-2 gap-12 mb-16">
           <div>
-            <h3 className="text-2xl font-bold mb-4">Why Choose Managed API?</h3>
+            <h3 className="text-2xl font-bold mb-4">Why Choose Premium?</h3>
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
                 <Check className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" />
                 <div>
-                  <strong>Zero Technical Setup</strong> - No need to create Google API keys or configure OAuth
+                  <strong>Advanced AI Insights</strong> - Google Gemini AI analyzes your projects for intelligent recommendations
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <Check className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" />
                 <div>
-                  <strong>Higher Rate Limits</strong> - 10x more API calls than free Google tier
+                  <strong>Custom Automations</strong> - Set up workflows and automated task management
                 </div>
               </li>
               <li className="flex items-start gap-3">

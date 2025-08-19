@@ -127,7 +127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           currency: 'USD',
           interval: 'monthly',
           features: [
-            'Everything in Managed API',
+            'Everything in Free',
             'Advanced AI insights with Gemini',
             'Custom automations and workflows',
             'Advanced reporting and analytics',
