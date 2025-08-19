@@ -53,14 +53,15 @@ export function GoogleConfig({ onConfigSubmit, isLoading = false }: GoogleConfig
       <div className="w-full max-w-2xl space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <Cloud className="h-8 w-8 text-blue-600" />
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              ProjectFlow
-            </h1>
+          <div className="flex items-center justify-center space-x-3 mb-4">
+            <Cloud className="h-10 w-10 text-blue-600" />
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">ProjectFlow</h1>
           </div>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
-            Connect your Google account to get started with free project management
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Setup Your Workspace
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300 max-w-lg mx-auto">
+            Connect your Google Drive to start managing projects. Your data stays completely private and under your control.
           </p>
         </div>
 

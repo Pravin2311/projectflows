@@ -25,15 +25,14 @@ function Router() {
     );
   }
 
-  // Show Google configuration if user hasn't configured their API keys
-  if (!hasGoogleConfig && !isAuthenticated) {
-    return <GoogleConfig onConfigSubmit={submitConfig} isLoading={configLoading} />;
-  }
-
   return (
     <Switch>
       {!isAuthenticated ? (
         <Route path="/" component={Landing} />
+      ) : !hasGoogleConfig ? (
+        <Route path="/">
+          <GoogleConfig onConfigSubmit={submitConfig} isLoading={configLoading} />
+        </Route>
       ) : (
         <>
           <Route path="/" component={Dashboard} />
