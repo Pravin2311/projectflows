@@ -1,186 +1,158 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Sidebar } from "@/components/ui/sidebar";
-import { TopNavigation } from "@/components/ui/top-navigation";
-import { KanbanBoard } from "@/components/ui/kanban-board";
-import { AiSuggestions } from "@/components/ui/ai-suggestions";
-import { TeamMembers } from "@/components/ui/team-members";
-import { ActivityFeed } from "@/components/ui/activity-feed";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Calendar, User, AlertCircle } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
-import { isUnauthorizedError } from "@/lib/authUtils";
-import type { Project, Task, User as UserType } from "@shared/schema";
+import { 
+  Plus, 
+  ArrowLeft,
+  Calendar,
+  Users, 
+  Settings,
+  MoreHorizontal,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Cloud,
+  Brain
+} from "lucide-react";
+import { format } from "date-fns";
+import { Link } from "wouter";
+import type { Project, Task } from "@shared/schema";
 
-const createTaskSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
-  priority: z.enum(["low", "medium", "high"]).default("medium"),
-  assigneeId: z.string().optional(),
-  dueDate: z.string().optional(),
-});
+interface TaskForm {
+  title: string;
+  description: string;
+  status: "todo" | "in-progress" | "done";
+  priority: "low" | "medium" | "high";
+  assignee?: string;
+}
 
-type CreateTaskData = z.infer<typeof createTaskSchema>;
+const statusConfig = {
+  "todo": { label: "To Do", color: "bg-gray-500", icon: Clock },
+  "in-progress": { label: "In Progress", color: "bg-blue-500", icon: AlertCircle },
+  "done": { label: "Done", color: "bg-green-500", icon: CheckCircle }
+};
+
+const priorityConfig = {
+  "low": { label: "Low", color: "text-green-600 bg-green-50" },
+  "medium": { label: "Medium", color: "text-yellow-600 bg-yellow-50" },
+  "high": { label: "High", color: "text-red-600 bg-red-50" }
+};
 
 export default function ProjectPage() {
-  const params = useParams();
-  const projectId = params.id;
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { id: projectId } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [viewMode, setViewMode] = useState<"board" | "list" | "timeline">("board");
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
-  const [createTaskStatus, setCreateTaskStatus] = useState<string>("todo");
-
-  // Check authentication
-  React.useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, authLoading, toast]);
-
-  const { data: projects = [] } = useQuery({
-    queryKey: ["/api/projects"],
-    enabled: !!user,
+  const [taskForm, setTaskForm] = useState<TaskForm>({
+    title: "",
+    description: "",
+    status: "todo",
+    priority: "medium"
   });
 
-  const { data: project, isLoading: projectLoading } = useQuery({
+  // Fetch project details
+  const { data: project, isLoading: projectLoading } = useQuery<Project>({
     queryKey: ["/api/projects", projectId],
-    enabled: !!projectId && !!user,
+    enabled: !!projectId,
   });
 
-  const { data: tasks = [], isLoading: tasksLoading } = useQuery({
+  // Fetch project tasks
+  const { data: tasks = [], isLoading: tasksLoading } = useQuery<Task[]>({
     queryKey: ["/api/projects", projectId, "tasks"],
-    enabled: !!projectId && !!user,
+    enabled: !!projectId,
   });
 
-  const { data: members = [] } = useQuery({
-    queryKey: ["/api/projects", projectId, "members"],
-    enabled: !!projectId && !!user,
-  });
-
-  const form = useForm<CreateTaskData>({
-    resolver: zodResolver(createTaskSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      priority: "medium",
-      assigneeId: "",
-      dueDate: "",
-    },
-  });
-
+  // Create task mutation
   const createTaskMutation = useMutation({
-    mutationFn: async (data: CreateTaskData & { status: string }) => {
-      const response = await apiRequest("POST", `/api/projects/${projectId}/tasks`, data);
-      return response.json();
+    mutationFn: async (taskData: TaskForm) => {
+      return await apiRequest(`/api/projects/${projectId}/tasks`, {
+        method: "POST",
+        body: JSON.stringify(taskData),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "activities"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "stats"] });
       setIsCreateTaskOpen(false);
-      form.reset();
+      setTaskForm({ title: "", description: "", status: "todo", priority: "medium" });
       toast({
-        title: "Task Created",
-        description: "Your task has been created successfully.",
+        title: "Task created",
+        description: "Your new task has been added to the project.",
       });
     },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to create task. Please try again.",
+        description: error.message || "Failed to create task. Please try again.",
         variant: "destructive",
       });
     },
   });
 
+  // Update task status mutation
   const updateTaskMutation = useMutation({
     mutationFn: async ({ taskId, updates }: { taskId: string; updates: Partial<Task> }) => {
-      const response = await apiRequest("PUT", `/api/tasks/${taskId}`, updates);
-      return response.json();
+      return await apiRequest(`/api/tasks/${taskId}`, {
+        method: "PATCH",
+        body: JSON.stringify(updates),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "activities"] });
+      toast({
+        title: "Task updated",
+        description: "Task has been updated successfully.",
+      });
     },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to update task. Please try again.",
+        description: error.message || "Failed to update task.",
         variant: "destructive",
       });
     },
   });
 
-  const handleCreateTask = (status: string) => {
-    setCreateTaskStatus(status);
-    setIsCreateTaskOpen(true);
+  const handleCreateTask = () => {
+    if (!taskForm.title.trim()) {
+      toast({
+        title: "Error",
+        description: "Task title is required.",
+        variant: "destructive"
+      });
+      return;
+    }
+    createTaskMutation.mutate(taskForm);
   };
 
-  const onSubmitTask = (data: CreateTaskData) => {
-    const taskData = {
-      ...data,
-      status: createTaskStatus,
-      dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
-    };
-    createTaskMutation.mutate(taskData);
+  const handleUpdateTaskStatus = (taskId: string, status: "todo" | "in-progress" | "done") => {
+    updateTaskMutation.mutate({ taskId, updates: { status } });
   };
 
-  const handleTaskUpdate = (taskId: string, updates: Partial<Task>) => {
-    updateTaskMutation.mutate({ taskId, updates });
+  const tasksByStatus = {
+    "todo": tasks.filter(task => task.status === "todo"),
+    "in-progress": tasks.filter(task => task.status === "in-progress"),
+    "done": tasks.filter(task => task.status === "done")
   };
 
-  if (authLoading || projectLoading) {
+  if (projectLoading || tasksLoading) {
     return (
-      <div className="flex h-screen">
-        <div className="w-64 bg-gray-100 animate-pulse"></div>
-        <div className="flex-1 p-6 space-y-6">
-          <div className="h-16 bg-gray-100 rounded animate-pulse"></div>
-          <div className="h-96 bg-gray-100 rounded animate-pulse"></div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600 dark:text-gray-300">Loading project from Google Drive...</p>
+          </div>
         </div>
       </div>
     );
@@ -188,223 +160,263 @@ export default function ProjectPage() {
 
   if (!project) {
     return (
-      <div className="flex h-screen">
-        <Sidebar projects={projects} />
-        <div className="flex-1 flex items-center justify-center">
-          <Card className="w-full max-w-md mx-4">
-            <CardContent className="pt-6 text-center space-y-4">
-              <AlertCircle className="w-16 h-16 text-gray-400 mx-auto" />
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Project Not Found</h3>
-                <p className="text-gray-600 mt-2">
-                  The project you're looking for doesn't exist or you don't have access to it.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Project Not Found</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">The project you're looking for doesn't exist or you don't have access to it.</p>
+          <Link href="/dashboard">
+            <Button>Back to Dashboard</Button>
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
-      <Sidebar projects={projects} currentProject={project} />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <TopNavigation 
-          title={project.name} 
-          subtitle={project.description || "Project workspace"}
-          currentProject={project}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-        />
-        
-        <main className="flex-1 overflow-auto p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
-            {/* Main Kanban Board - 3 columns */}
-            <div className="lg:col-span-3">
-              <div className="bg-white rounded-xl border border-gray-200 p-6 h-full">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-bold text-gray-900">Task Board</h2>
-                  <Badge 
-                    variant="outline"
-                    style={{ 
-                      borderLeftColor: project.color || '#7C3AED',
-                      borderLeftWidth: '3px'
-                    }}
-                  >
-                    {tasks.length} tasks
-                  </Badge>
-                </div>
-
-                {tasksLoading ? (
-                  <div className="grid grid-cols-3 gap-4 h-96">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="space-y-4">
-                        <div className="h-8 bg-gray-200 rounded animate-pulse"></div>
-                        {[1, 2].map((j) => (
-                          <div key={j} className="h-32 bg-gray-100 rounded animate-pulse"></div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <KanbanBoard
-                    tasks={tasks}
-                    onTaskUpdate={handleTaskUpdate}
-                    onCreateTask={handleCreateTask}
-                  />
-                )}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Top Navigation */}
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-4">
+              <Link href="/dashboard">
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+              </Link>
+              <div className="flex items-center space-x-2">
+                <Cloud className="h-6 w-6 text-blue-600" />
+                <h1 className="text-lg font-semibold text-gray-900 dark:text-white">{project.name}</h1>
+                <Badge variant={project.status === "completed" ? "default" : "secondary"}>
+                  {project.status}
+                </Badge>
               </div>
             </div>
-
-            {/* Right Sidebar - 1 column */}
-            <div className="space-y-6">
-              <AiSuggestions projectId={project.id} />
-              <TeamMembers projectId={project.id} />
-              <ActivityFeed projectId={project.id} limit={8} />
+            
+            <div className="flex items-center space-x-2">
+              <Dialog open={isCreateTaskOpen} onOpenChange={setIsCreateTaskOpen}>
+                <DialogTrigger asChild>
+                  <Button data-testid="button-add-task" className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Task
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create New Task</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="task-title">Task Title</Label>
+                      <Input
+                        id="task-title"
+                        data-testid="input-task-title"
+                        value={taskForm.title}
+                        onChange={(e) => setTaskForm(prev => ({ ...prev, title: e.target.value }))}
+                        placeholder="Enter task title"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="task-description">Description</Label>
+                      <Textarea
+                        id="task-description"
+                        data-testid="textarea-task-description"
+                        value={taskForm.description}
+                        onChange={(e) => setTaskForm(prev => ({ ...prev, description: e.target.value }))}
+                        placeholder="Describe the task"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="task-status">Status</Label>
+                        <select
+                          id="task-status"
+                          data-testid="select-task-status"
+                          value={taskForm.status}
+                          onChange={(e) => setTaskForm(prev => ({ ...prev, status: e.target.value as "todo" | "in-progress" | "done" }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white dark:bg-gray-800 dark:border-gray-600"
+                        >
+                          <option value="todo">To Do</option>
+                          <option value="in-progress">In Progress</option>
+                          <option value="done">Done</option>
+                        </select>
+                      </div>
+                      <div>
+                        <Label htmlFor="task-priority">Priority</Label>
+                        <select
+                          id="task-priority"
+                          data-testid="select-task-priority"
+                          value={taskForm.priority}
+                          onChange={(e) => setTaskForm(prev => ({ ...prev, priority: e.target.value as "low" | "medium" | "high" }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white dark:bg-gray-800 dark:border-gray-600"
+                        >
+                          <option value="low">Low</option>
+                          <option value="medium">Medium</option>
+                          <option value="high">High</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <Button variant="outline" onClick={() => setIsCreateTaskOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        data-testid="button-create-task"
+                        onClick={handleCreateTask}
+                        disabled={createTaskMutation.isPending}
+                      >
+                        {createTaskMutation.isPending ? "Creating..." : "Create Task"}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              
+              <Button variant="ghost" size="sm">
+                <Settings className="h-4 w-4" />
+              </Button>
             </div>
           </div>
-        </main>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Project Info */}
+        <div className="mb-6">
+          {project.description && (
+            <p className="text-gray-600 dark:text-gray-300 mb-4">{project.description}</p>
+          )}
+          <div className="flex items-center space-x-6 text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex items-center">
+              <Calendar className="h-4 w-4 mr-1" />
+              Created {format(new Date(project.createdAt), "MMM d, yyyy")}
+            </div>
+            <div className="flex items-center">
+              <Users className="h-4 w-4 mr-1" />
+              {project.memberEmails?.length || 0} members
+            </div>
+            <div className="flex items-center">
+              <Cloud className="h-4 w-4 mr-1" />
+              Stored in Google Drive
+            </div>
+          </div>
+        </div>
+
+        {/* Kanban Board */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {(Object.keys(statusConfig) as Array<keyof typeof statusConfig>).map((status) => {
+            const config = statusConfig[status];
+            const statusTasks = tasksByStatus[status];
+            
+            return (
+              <div key={status} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                <div className="p-4 border-b">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className={`w-3 h-3 rounded-full ${config.color}`}></div>
+                      <h3 className="font-medium text-gray-900 dark:text-white">{config.label}</h3>
+                      <Badge variant="secondary">{statusTasks.length}</Badge>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="p-4 space-y-4 min-h-[400px]">
+                  {statusTasks.map((task) => (
+                    <Card 
+                      key={task.id} 
+                      data-testid={`task-card-${task.id}`}
+                      className="hover:shadow-md transition-shadow cursor-pointer"
+                    >
+                      <CardHeader className="pb-2">
+                        <div className="flex items-start justify-between">
+                          <CardTitle className="text-sm font-medium">{task.title}</CardTitle>
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                            <MoreHorizontal className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        {task.description && (
+                          <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
+                            {task.description}
+                          </p>
+                        )}
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="flex items-center justify-between">
+                          <Badge 
+                            variant="secondary" 
+                            className={`text-xs ${priorityConfig[task.priority].color}`}
+                          >
+                            {priorityConfig[task.priority].label}
+                          </Badge>
+                          <div className="flex space-x-1">
+                            {status !== "todo" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleUpdateTaskStatus(task.id, "todo")}
+                                className="h-6 px-2 text-xs"
+                              >
+                                ← To Do
+                              </Button>
+                            )}
+                            {status !== "in-progress" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleUpdateTaskStatus(task.id, "in-progress")}
+                                className="h-6 px-2 text-xs"
+                              >
+                                {status === "todo" ? "Start →" : "← In Progress"}
+                              </Button>
+                            )}
+                            {status !== "done" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleUpdateTaskStatus(task.id, "done")}
+                                className="h-6 px-2 text-xs"
+                              >
+                                Done →
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  
+                  {statusTasks.length === 0 && (
+                    <div className="text-center py-8 text-gray-400">
+                      <config.icon className="h-8 w-8 mx-auto mb-2" />
+                      <p className="text-sm">No {config.label.toLowerCase()} tasks</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* AI Suggestions Section */}
+        <div className="mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Brain className="h-5 w-5 text-purple-600" />
+                <span>AI-Powered Insights</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600 dark:text-gray-300 text-sm">
+                AI suggestions will appear here based on your project progress and team activity. 
+                This feature uses Google's Gemini AI to provide intelligent recommendations.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-
-      {/* Create Task Dialog */}
-      <Dialog open={isCreateTaskOpen} onOpenChange={setIsCreateTaskOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Create New Task</DialogTitle>
-          </DialogHeader>
-          
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmitTask)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Task Title</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="Enter task title..." 
-                        {...field} 
-                        data-testid="input-task-title"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Describe the task..." 
-                        rows={3}
-                        {...field} 
-                        data-testid="textarea-task-description"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="priority"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Priority</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger data-testid="select-task-priority">
-                            <SelectValue placeholder="Select priority" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="low">Low Priority</SelectItem>
-                          <SelectItem value="medium">Medium Priority</SelectItem>
-                          <SelectItem value="high">High Priority</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="assigneeId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Assignee</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger data-testid="select-task-assignee">
-                            <SelectValue placeholder="Assign to..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="">Unassigned</SelectItem>
-                          {members.map((member: any) => (
-                            <SelectItem key={member.user.id} value={member.user.id}>
-                              {member.user.firstName} {member.user.lastName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="dueDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Due Date</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="date" 
-                        {...field} 
-                        data-testid="input-task-due-date"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="flex items-center space-x-2 pt-4">
-                <Button 
-                  type="submit" 
-                  disabled={createTaskMutation.isPending}
-                  data-testid="button-create-task"
-                >
-                  {createTaskMutation.isPending ? "Creating..." : "Create Task"}
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setIsCreateTaskOpen(false)}
-                  data-testid="button-cancel-task"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
