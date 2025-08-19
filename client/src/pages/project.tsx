@@ -63,26 +63,23 @@ export default function ProjectPage() {
 
   // Fetch project details
   const { data: project, isLoading: projectLoading } = useQuery<Project>({
-    queryKey: ["/api/projects", projectId],
+    queryKey: [`/api/projects/${projectId}`],
     enabled: !!projectId,
   });
 
   // Fetch project tasks
   const { data: tasks = [], isLoading: tasksLoading } = useQuery<Task[]>({
-    queryKey: ["/api/projects", projectId, "tasks"],
+    queryKey: [`/api/projects/${projectId}/tasks`],
     enabled: !!projectId,
   });
 
   // Create task mutation
   const createTaskMutation = useMutation({
     mutationFn: async (taskData: TaskForm) => {
-      return await apiRequest(`/api/projects/${projectId}/tasks`, {
-        method: "POST",
-        body: JSON.stringify(taskData),
-      });
+      return await apiRequest("POST", `/api/projects/${projectId}/tasks`, taskData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "tasks"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/tasks`] });
       setIsCreateTaskOpen(false);
       setTaskForm({ title: "", description: "", status: "todo", priority: "medium" });
       toast({
@@ -102,13 +99,10 @@ export default function ProjectPage() {
   // Update task status mutation
   const updateTaskMutation = useMutation({
     mutationFn: async ({ taskId, updates }: { taskId: string; updates: Partial<Task> }) => {
-      return await apiRequest(`/api/tasks/${taskId}`, {
-        method: "PATCH",
-        body: JSON.stringify(updates),
-      });
+      return await apiRequest("PATCH", `/api/tasks/${taskId}`, updates);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "tasks"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/tasks`] });
       toast({
         title: "Task updated",
         description: "Task has been updated successfully.",
