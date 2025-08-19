@@ -20,9 +20,11 @@ const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SEC
 import { insertProjectSchema, insertTaskSchema, insertCommentSchema } from "@shared/schema";
 import { z } from "zod";
 
+import session from 'express-session';
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Session setup for simple auth
-  app.use(require('express-session')({
+  app.use(session({
     secret: process.env.SESSION_SECRET || 'dev-secret',
     resave: false,
     saveUninitialized: false,
@@ -39,8 +41,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get('/api/auth/login', (req: any, res) => {
-    // For development - simulate login redirect
-    res.redirect('/?google-auth-setup=true');
+    // For development - just redirect back to home with setup flag
+    res.redirect('/?setup=google');
   });
 
   app.post('/api/auth/google-config', async (req: any, res) => {

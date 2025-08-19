@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { GoogleConfig } from "@/components/ui/google-config";
 import { 
   Cloud, 
   Shield, 
@@ -13,11 +14,48 @@ import {
   Lock,
   Settings
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function Landing() {
+  const [showGoogleSetup, setShowGoogleSetup] = useState(false);
+
+  useEffect(() => {
+    // Check URL params to see if we should show Google setup
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('setup') === 'google') {
+      setShowGoogleSetup(true);
+      // Clean up URL
+      window.history.replaceState({}, '', '/');
+    }
+  }, []);
+
   const handleLogin = () => {
     window.location.href = '/api/auth/login';
   };
+
+  const handleGoogleConfigSubmit = async (config: any) => {
+    try {
+      const response = await fetch('/api/auth/google-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config)
+      });
+      
+      if (response.ok) {
+        // Redirect to dashboard after successful config
+        window.location.href = '/dashboard';
+      } else {
+        throw new Error('Failed to setup Google configuration');
+      }
+    } catch (error) {
+      console.error('Config setup error:', error);
+    }
+  };
+
+  // If showing Google setup, render that instead
+  if (showGoogleSetup) {
+    return <GoogleConfig onConfigSubmit={handleGoogleConfigSubmit} isLoading={false} />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
