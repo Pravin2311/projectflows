@@ -3,7 +3,13 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { aiService } from "./services/aiService";
-import { googlePayService } from "./services/googlePayService";
+import Stripe from "stripe";
+
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.warn('STRIPE_SECRET_KEY not found - subscription features will be limited');
+}
+
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 import { insertProjectSchema, insertTaskSchema, insertCommentSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -23,10 +29,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Subscription routes - Google Pay based
+  // Subscription routes - Stripe based
   app.get('/api/subscription/plans', async (req, res) => {
     try {
-      const plans = await googlePayService.getAvailablePlans();
+      const plans = [
+        {
+          id: 'free',
+          name: 'Free',
+          amount: 0,
+          currency: 'USD',
+          interval: 'monthly',
+          features: [
+            'Unlimited projects in your Google Drive',
+            'Basic kanban boards',
+            'Team collaboration',
+            'Your own Google API keys required'
+          ]
+        },
+        {
+          id: 'managed_api',
+          name: 'Managed API',
+          amount: 900, // $9.00 in cents
+          currency: 'USD',
+          interval: 'monthly',
+          features: [
+            'Everything in Free',
+            'No Google API setup required',
+            '10x higher API rate limits',
+            'Priority email support',
+            'Advanced Google Drive integration'
+          ]
+        },
+        {
+          id: 'premium',
+          name: 'Premium',
+          amount: 1900, // $19.00 in cents
+          currency: 'USD',
+          interval: 'monthly',
+          features: [
+            'Everything in Managed API',
+            'Advanced AI insights with Gemini',
+            'Custom automations and workflows',
+            'Advanced reporting and analytics',
+            'Priority support with direct access',
+            'Early access to new features'
+          ]
+        }
+      ];
       res.json(plans);
     } catch (error) {
       console.error("Error fetching subscription plans:", error);
@@ -34,35 +83,82 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/subscription/create', isAuthenticated, async (req: any, res) => {
+  // Create payment intent for Stripe checkout
+  app.post('/api/create-payment-intent', isAuthenticated, async (req: any, res) => {
     try {
+      if (!stripe) {
+        return res.status(500).json({ message: "Stripe not configured" });
+      }
+
       const { planId } = req.body;
       const userId = req.user.claims.sub;
       const userEmail = req.user.claims.email;
-      
-      // Create subscription using Google Pay service
-      const subscription = await googlePayService.createSubscription(
-        userId, 
-        planId, 
-        userEmail
-      );
-      
-      // Update user subscription in storage
-      await storage.updateUserSubscription(userId, {
-        subscriptionTier: planId as any,
-        subscriptionStatus: 'active',
-        googlePaySubscriptionId: subscription.subscriptionId,
-        subscriptionExpiry: subscription.currentPeriodEnd
+
+      // Plan pricing
+      const planPricing = {
+        managed_api: 900, // $9.00
+        premium: 1900 // $19.00
+      };
+
+      const amount = planPricing[planId as keyof typeof planPricing];
+      if (!amount) {
+        return res.status(400).json({ message: "Invalid plan" });
+      }
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount,
+        currency: 'usd',
+        metadata: {
+          userId,
+          planId,
+          userEmail
+        }
       });
-      
+
       res.json({ 
-        success: true,
-        subscription,
-        paymentProvider: "google_pay"
+        clientSecret: paymentIntent.client_secret,
+        planId,
+        amount
       });
     } catch (error) {
-      console.error("Error creating subscription:", error);
-      res.status(500).json({ message: "Failed to create subscription" });
+      console.error("Error creating payment intent:", error);
+      res.status(500).json({ message: "Failed to create payment intent" });
+    }
+  });
+
+  // Handle successful payment and activate subscription
+  app.post('/api/subscription/activate', isAuthenticated, async (req: any, res) => {
+    try {
+      const { paymentIntentId } = req.body;
+      const userId = req.user.claims.sub;
+
+      if (!stripe) {
+        return res.status(500).json({ message: "Stripe not configured" });
+      }
+
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      
+      if (paymentIntent.status === 'succeeded') {
+        const planId = paymentIntent.metadata.planId;
+        
+        // Update user subscription in storage
+        await storage.updateUserSubscription(userId, {
+          subscriptionTier: planId as any,
+          subscriptionStatus: 'active',
+          subscriptionExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        });
+
+        res.json({ 
+          success: true,
+          planId,
+          status: 'active'
+        });
+      } else {
+        res.status(400).json({ message: "Payment not completed" });
+      }
+    } catch (error) {
+      console.error("Error activating subscription:", error);
+      res.status(500).json({ message: "Failed to activate subscription" });
     }
   });
 

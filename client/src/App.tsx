@@ -10,6 +10,7 @@ import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import ProjectPage from "@/pages/project";
 import Pricing from "@/pages/pricing";
+import Checkout from "@/pages/checkout";
 
 function Router() {
   const { isAuthenticated, isLoading, hasGoogleConfig } = useAuth();
@@ -43,6 +44,7 @@ function Router() {
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/project/:id" component={ProjectPage} />
           <Route path="/pricing" component={Pricing} />
+          <Route path="/checkout" component={Checkout} />
           {/* Add more authenticated routes here */}
         </>
       )}

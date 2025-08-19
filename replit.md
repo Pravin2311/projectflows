@@ -2,19 +2,19 @@
 
 ## Overview
 
-This is a completely free project management platform built with React and Express.js that uses Google Drive for data storage instead of traditional databases. Users provide their own Google API credentials to keep the platform 100% free while maintaining complete control over their data. The platform offers comprehensive project management capabilities including kanban boards, task tracking, team collaboration, and AI-powered insights using Google's Gemini AI. All project data is stored securely in the user's own Google Drive, ensuring privacy and zero hosting costs.
+This is a completely free project management platform built with React and Express.js that uses Google Drive for data storage instead of traditional databases. Users provide their own Google API credentials to keep the platform 100% free while maintaining complete control over their data. The platform offers comprehensive project management capabilities including kanban boards, task tracking, team collaboration, and AI-powered insights using Google's Gemini AI. All project data is stored securely in the user's own Google Drive, ensuring privacy and zero hosting costs. Monetization is handled through Stripe for reliable subscription processing while keeping all user data in Google Drive.
 
 ## Recent Changes (August 19, 2025)
 
-### Complete Google-Only Monetization System
-- **Google Pay Integration**: Built complete Google Pay subscription system replacing all Stripe dependencies
+### Complete Google + Stripe Monetization System
+- **Stripe Payment Integration**: Built reliable subscription system with Stripe for payment processing
 - **Managed API Service**: $9/month service for users who don't want technical Google API setup
-- **Three-Tier Pricing**: Free (own API keys), Managed API ($9), Premium ($19) with Google Pay processing
-- **Google Cloud Billing**: Scaffolded Google Cloud Billing API integration for enterprise features
+- **Three-Tier Pricing**: Free (own API keys), Managed API ($9), Premium ($19) with Stripe checkout
+- **Google Data Ownership**: All user data remains in their Google Drive despite Stripe payments
 - **Landing Page Enhancement**: Added prominent Managed API service promotion section
 
-### Google-First Architecture
-- **Payment Processing**: Exclusively Google Pay/Google Cloud Billing (no third-party payment processors)
+### Google-First Data Architecture
+- **Payment Processing**: Stripe for reliable subscription management (industry standard)
 - **Data Storage**: All project data in user's Google Drive with complete ownership
 - **AI Integration**: Google Gemini AI for project insights and automation
 - **Authentication**: Google OAuth with user-provided or managed API credentials

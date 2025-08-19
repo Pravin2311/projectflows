@@ -7,7 +7,11 @@ import { Check, Star, Zap, Crown, ArrowRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { GooglePayButton } from "@/components/GooglePayButton";
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+
+// Load Stripe
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || '');
 
 export default function Pricing() {
   const { user, isAuthenticated } = useAuth();
@@ -31,17 +35,26 @@ export default function Pricing() {
       return;
     }
 
+    if (planId === 'free') {
+      return;
+    }
+
     setIsUpgrading(planId);
     try {
-      // For now, just show success message since Stripe is not configured
-      toast({
-        title: "Upgrade Initiated",
-        description: "Subscription upgrade will be available once payment processing is configured.",
-      });
+      // Create payment intent
+      const response = await apiRequest("POST", "/api/create-payment-intent", { planId });
+      const data = await response.json();
       
-      // TODO: Implement actual Stripe subscription flow when ready
-      // const response = await apiRequest("POST", "/api/subscription/create", { planId });
-      // window.location.href = response.checkoutUrl;
+      if (data.clientSecret) {
+        // Store the client secret and plan info for the checkout
+        sessionStorage.setItem('stripe_client_secret', data.clientSecret);
+        sessionStorage.setItem('stripe_plan_id', planId);
+        
+        // Navigate to a simple checkout page
+        window.location.href = `/checkout?planId=${planId}`;
+      } else {
+        throw new Error(data.message || 'Failed to create payment intent');
+      }
     } catch (error) {
       toast({
         title: "Upgrade Failed",
@@ -134,22 +147,24 @@ export default function Pricing() {
                     ))}
                   </ul>
 
-                  <GooglePayButton
-                    planId={plan.id}
-                    planName={plan.name}
-                    amount={plan.amount} // Amount already in cents from GooglePayService
-                    onSuccess={(subscriptionId) => {
-                      toast({
-                        title: "Subscription Active!",
-                        description: `Welcome to ${plan.name}. Your subscription is now active.`,
-                      });
-                      // Refresh user data to show new subscription status
-                      window.location.reload();
-                    }}
-                    onError={(error) => {
-                      console.error('Subscription error:', error);
-                    }}
-                  />
+                  <Button
+                    className="w-full"
+                    data-testid={`button-${plan.id}-upgrade`}
+                    variant={plan.id === "managed_api" ? "default" : "outline"}
+                    disabled={isCurrentPlan || isUpgrading === plan.id || plan.id === 'free'}
+                    onClick={() => handleUpgrade(plan.id)}
+                  >
+                    {isUpgrading === plan.id ? (
+                      <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                    ) : (
+                      <>
+                        {isCurrentPlan ? "Current Plan" : 
+                         plan.id === 'free' ? "Get Started" :
+                         isUpgrade ? "Upgrade with Stripe" : "Subscribe with Stripe"}
+                        {!isCurrentPlan && plan.id !== 'free' && <ArrowRight className="h-4 w-4 ml-2" />}
+                      </>
+                    )}
+                  </Button>
                 </CardContent>
               </Card>
             );
