@@ -7,16 +7,22 @@ import { Check, Star, Zap, Crown, ArrowRight } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import type { SubscriptionPlan } from "@shared/schema";
+import { GooglePayButton } from "@/components/GooglePayButton";
 
 export default function Pricing() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [isUpgrading, setIsUpgrading] = useState<string | null>(null);
 
-  const { data: plans = [], isLoading } = useQuery<SubscriptionPlan[]>({
+  const { data: plans = [], isLoading } = useQuery<Array<{
+    id: string;
+    name: string;
+    amount: number;
+    currency: string;
+    interval: string;
+    features: string[];
+  }>>({
     queryKey: ["/api/subscription/plans"],
-    enabled: isAuthenticated,
   });
 
   const handleUpgrade = async (planId: string) => {
@@ -85,16 +91,16 @@ export default function Pricing() {
         <div className="grid md:grid-cols-3 gap-8 mb-16">
           {plans.map((plan) => {
             const currentTier = getCurrentUserTier();
-            const isCurrentPlan = plan.tier === currentTier;
-            const isUpgrade = plan.tier !== "free" && currentTier === "free";
+            const isCurrentPlan = plan.id === currentTier;
+            const isUpgrade = plan.id !== "free" && currentTier === "free";
             
             return (
               <Card 
                 key={plan.id} 
-                className={`relative ${plan.popular ? "border-blue-500 shadow-lg scale-105" : ""} ${isCurrentPlan ? "bg-blue-50 dark:bg-blue-900/20" : ""}`}
-                data-testid={`plan-card-${plan.tier}`}
+                className={`relative ${plan.id === "managed_api" ? "border-blue-500 shadow-lg scale-105" : ""} ${isCurrentPlan ? "bg-blue-50 dark:bg-blue-900/20" : ""}`}
+                data-testid={`plan-card-${plan.id}`}
               >
-                {plan.popular && (
+                {plan.id === "managed_api" && (
                   <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-600">
                     Most Popular
                   </Badge>
@@ -102,21 +108,25 @@ export default function Pricing() {
                 
                 <CardHeader className="text-center pb-8">
                   <div className="flex justify-center mb-4 text-blue-600">
-                    {getPlanIcon(plan.tier)}
+                    {getPlanIcon(plan.id)}
                   </div>
                   
                   <CardTitle className="text-2xl mb-2">{plan.name}</CardTitle>
-                  <CardDescription className="text-lg mb-4">{plan.description}</CardDescription>
+                  <CardDescription className="text-lg mb-4">
+                    {plan.id === "free" && "Start with your own Google API keys"}
+                    {plan.id === "managed_api" && "We handle all the technical setup"}
+                    {plan.id === "premium" && "Advanced features and priority support"}
+                  </CardDescription>
                   
                   <div className="text-center">
-                    <span className="text-4xl font-bold">${plan.price}</span>
+                    <span className="text-4xl font-bold">${(plan.amount / 100).toFixed(0)}</span>
                     <span className="text-gray-500 dark:text-gray-400">/month</span>
                   </div>
                 </CardHeader>
 
                 <CardContent>
                   <ul className="space-y-3 mb-8">
-                    {plan.features.map((feature, index) => (
+                    {plan.features.map((feature: string, index: number) => (
                       <li key={index} className="flex items-start gap-3">
                         <Check className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
                         <span className="text-sm">{feature}</span>
@@ -124,22 +134,22 @@ export default function Pricing() {
                     ))}
                   </ul>
 
-                  <Button
-                    className="w-full"
-                    data-testid={`button-${plan.tier}-upgrade`}
-                    variant={plan.popular ? "default" : "outline"}
-                    disabled={isCurrentPlan || isUpgrading === plan.id}
-                    onClick={() => handleUpgrade(plan.id)}
-                  >
-                    {isUpgrading === plan.id ? (
-                      <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                    ) : (
-                      <>
-                        {isCurrentPlan ? "Current Plan" : isUpgrade ? "Upgrade Now" : "Get Started"}
-                        {!isCurrentPlan && <ArrowRight className="h-4 w-4 ml-2" />}
-                      </>
-                    )}
-                  </Button>
+                  <GooglePayButton
+                    planId={plan.id}
+                    planName={plan.name}
+                    amount={plan.amount} // Amount already in cents from GooglePayService
+                    onSuccess={(subscriptionId) => {
+                      toast({
+                        title: "Subscription Active!",
+                        description: `Welcome to ${plan.name}. Your subscription is now active.`,
+                      });
+                      // Refresh user data to show new subscription status
+                      window.location.reload();
+                    }}
+                    onError={(error) => {
+                      console.error('Subscription error:', error);
+                    }}
+                  />
                 </CardContent>
               </Card>
             );

@@ -18,8 +18,8 @@ export const userSchema = z.object({
   subscriptionTier: z.enum(["free", "managed_api", "premium"]).default("free"),
   subscriptionStatus: z.enum(["active", "cancelled", "expired"]).optional(),
   subscriptionExpiry: z.string().datetime().optional(),
-  stripeCustomerId: z.string().optional(),
-  stripeSubscriptionId: z.string().optional(),
+  googlePaySubscriptionId: z.string().optional(), // Google Play Billing subscription ID
+  googleCloudCustomerId: z.string().optional(), // Google Cloud billing customer ID
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });

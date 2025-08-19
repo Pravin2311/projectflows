@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { aiService } from "./services/aiService";
+import { googlePayService } from "./services/googlePayService";
 import { insertProjectSchema, insertTaskSchema, insertCommentSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -22,10 +23,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Subscription routes
+  // Subscription routes - Google Pay based
   app.get('/api/subscription/plans', async (req, res) => {
     try {
-      const plans = await storage.getSubscriptionPlans();
+      const plans = await googlePayService.getAvailablePlans();
       res.json(plans);
     } catch (error) {
       console.error("Error fetching subscription plans:", error);
@@ -37,13 +38,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { planId } = req.body;
       const userId = req.user.claims.sub;
+      const userEmail = req.user.claims.email;
       
-      // TODO: Implement Stripe subscription creation when keys are available
-      // For now, return a placeholder response
+      // Create subscription using Google Pay service
+      const subscription = await googlePayService.createSubscription(
+        userId, 
+        planId, 
+        userEmail
+      );
+      
+      // Update user subscription in storage
+      await storage.updateUserSubscription(userId, {
+        subscriptionTier: planId as any,
+        subscriptionStatus: 'active',
+        googlePaySubscriptionId: subscription.subscriptionId,
+        subscriptionExpiry: subscription.currentPeriodEnd
+      });
+      
       res.json({ 
-        message: "Subscription creation will be available once Stripe is configured",
-        planId,
-        userId 
+        success: true,
+        subscription,
+        paymentProvider: "google_pay"
       });
     } catch (error) {
       console.error("Error creating subscription:", error);
