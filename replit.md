@@ -27,6 +27,7 @@ This is a completely free project management platform built with React and Expre
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Business goal: Monetize the platform while maintaining the core value proposition of Google Drive-based data storage.
 
 ## System Architecture
 
