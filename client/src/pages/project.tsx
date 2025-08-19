@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { TimeTracker } from "@/components/ui/time-tracker";
+import { GanttChart } from "@/components/ui/gantt-chart";
+import { SprintManager } from "@/components/ui/sprint-manager";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
@@ -22,7 +25,12 @@ import {
   CheckCircle,
   AlertCircle,
   Cloud,
-  Brain
+  Brain,
+  Timer,
+  BarChart3,
+  Flag,
+  FileText,
+  MessageSquare
 } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "wouter";
@@ -32,8 +40,13 @@ interface TaskForm {
   title: string;
   description: string;
   status: "todo" | "in_progress" | "done";
-  priority: "low" | "medium" | "high";
+  priority: "low" | "medium" | "high" | "critical";
   assignee?: string;
+  startDate?: string;
+  dueDate?: string;
+  estimatedHours?: number;
+  tags: string[];
+  sprintId?: string;
 }
 
 const statusConfig = {
@@ -43,9 +56,10 @@ const statusConfig = {
 };
 
 const priorityConfig = {
-  "low": { label: "Low", color: "text-green-600 bg-green-50" },
-  "medium": { label: "Medium", color: "text-yellow-600 bg-yellow-50" },
-  "high": { label: "High", color: "text-red-600 bg-red-50" }
+  "low": { label: "Low", color: "text-green-600 bg-green-50 border-green-200" },
+  "medium": { label: "Medium", color: "text-yellow-600 bg-yellow-50 border-yellow-200" },
+  "high": { label: "High", color: "text-orange-600 bg-orange-50 border-orange-200" },
+  "critical": { label: "Critical", color: "text-red-600 bg-red-50 border-red-200" }
 };
 
 export default function ProjectPage() {
@@ -58,8 +72,13 @@ export default function ProjectPage() {
     title: "",
     description: "",
     status: "todo",
-    priority: "medium"
+    priority: "medium",
+    tags: [],
+    sprintId: ""
   });
+
+  const [currentView, setCurrentView] = useState<"kanban" | "gantt" | "sprints">("kanban");
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   // Fetch project details
   const { data: project, isLoading: projectLoading } = useQuery<Project>({
@@ -81,7 +100,7 @@ export default function ProjectPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/tasks`] });
       setIsCreateTaskOpen(false);
-      setTaskForm({ title: "", description: "", status: "todo", priority: "medium" });
+      setTaskForm({ title: "", description: "", status: "todo", priority: "medium", tags: [], sprintId: "" });
       toast({
         title: "Task created",
         description: "Your new task has been added to the project.",
@@ -253,6 +272,7 @@ export default function ProjectPage() {
                           <option value="low">Low</option>
                           <option value="medium">Medium</option>
                           <option value="high">High</option>
+                          <option value="critical">Critical</option>
                         </select>
                       </div>
                     </div>
@@ -302,8 +322,40 @@ export default function ProjectPage() {
           </div>
         </div>
 
-        {/* Kanban Board */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* View Switcher */}
+        <div className="flex items-center space-x-2 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
+          <Button
+            variant={currentView === "kanban" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setCurrentView("kanban")}
+            data-testid="button-view-kanban"
+          >
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Kanban
+          </Button>
+          <Button
+            variant={currentView === "gantt" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setCurrentView("gantt")}
+            data-testid="button-view-gantt"
+          >
+            <Calendar className="h-4 w-4 mr-2" />
+            Timeline
+          </Button>
+          <Button
+            variant={currentView === "sprints" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setCurrentView("sprints")}
+            data-testid="button-view-sprints"
+          >
+            <Flag className="h-4 w-4 mr-2" />
+            Sprints
+          </Button>
+        </div>
+
+        {/* Main Content Area */}
+        {currentView === "kanban" && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {(Object.keys(statusConfig) as Array<keyof typeof statusConfig>).map((status) => {
             const config = statusConfig[status];
             const statusTasks = tasksByStatus[status];
@@ -395,25 +447,66 @@ export default function ProjectPage() {
               </div>
             );
           })}
-        </div>
+          </div>
+        )}
 
-        {/* AI Suggestions Section */}
-        <div className="mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Brain className="h-5 w-5 text-purple-600" />
-                <span>AI-Powered Insights</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 dark:text-gray-300 text-sm">
-                AI suggestions will appear here based on your project progress and team activity. 
-                This feature uses Google's Gemini AI to provide intelligent recommendations.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        {/* AI Suggestions Section - Only show in Kanban view */}
+        {currentView === "kanban" && (
+          <div className="mt-8">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Brain className="h-5 w-5 text-purple-600" />
+                  <span>AI-Powered Insights</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">
+                  AI suggestions will appear here based on your project progress and team activity. 
+                  This feature uses Google's Gemini AI to provide intelligent recommendations.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Gantt Chart View */}
+        {currentView === "gantt" && (
+          <div className="space-y-6">
+            <GanttChart tasks={tasks} title="Project Timeline" />
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Timer className="h-5 w-5" />
+                    <span>Time Tracking</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-500">Select a task to track time and view details</p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <MessageSquare className="h-5 w-5" />
+                    <span>Comments & Updates</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-500">Comments feature coming soon...</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+
+        {/* Sprint Management View */}
+        {currentView === "sprints" && (
+          <SprintManager projectId={projectId!} tasks={tasks} />
+        )}
       </div>
     </div>
   );

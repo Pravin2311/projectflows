@@ -38,10 +38,15 @@ export const projectSchema = z.object({
   description: z.string().optional(),
   ownerId: z.string(),
   color: z.string().default("#7C3AED"),
-  status: z.enum(["active", "completed", "archived"]).default("active"),
+  status: z.enum(["active", "completed", "archived", "on_hold"]).default("active"),
   driveFileId: z.string(), // Google Drive file ID for project data
   allowedEmails: z.array(z.string().email()).optional().default([]), // Email allowlist for team members
   memberEmails: z.array(z.string().email()).default([]), // Alternative name for compatibility
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+  budget: z.number().optional(),
+  spentBudget: z.number().default(0),
+  templateId: z.string().optional(), // Reference to project template
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -62,13 +67,20 @@ export const taskSchema = z.object({
   title: z.string().min(1, "Task title is required"),
   description: z.string().optional(),
   status: z.enum(["todo", "in_progress", "done"]).default("todo"),
-  priority: z.enum(["low", "medium", "high"]).default("medium"),
+  priority: z.enum(["low", "medium", "high", "critical"]).default("medium"),
   projectId: z.string(),
   assigneeId: z.string().optional(),
   createdById: z.string(),
   dueDate: z.string().datetime().optional(),
+  startDate: z.string().datetime().optional(),
+  estimatedHours: z.number().optional(),
+  actualHours: z.number().default(0),
   progress: z.number().min(0).max(100).default(0),
   position: z.number().default(0),
+  dependsOn: z.array(z.string()).default([]), // Task IDs this task depends on
+  tags: z.array(z.string()).default([]),
+  attachments: z.array(z.string()).default([]), // File URLs or IDs
+  sprintId: z.string().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -131,6 +143,90 @@ export const insertActivitySchema = activitySchema.omit({
   createdAt: true,
 });
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
+
+// Sprint schema for Agile workflow
+export const sprintSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1, "Sprint name is required"),
+  description: z.string().optional(),
+  projectId: z.string(),
+  startDate: z.string().datetime(),
+  endDate: z.string().datetime(),
+  status: z.enum(["planned", "active", "completed"]).default("planned"),
+  goal: z.string().optional(),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type Sprint = z.infer<typeof sprintSchema>;
+
+export const insertSprintSchema = sprintSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertSprint = z.infer<typeof insertSprintSchema>;
+
+// Time entry schema for time tracking
+export const timeEntrySchema = z.object({
+  id: z.string(),
+  taskId: z.string(),
+  userId: z.string(),
+  description: z.string().optional(),
+  hours: z.number().min(0),
+  date: z.string().datetime(),
+  billable: z.boolean().default(false),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type TimeEntry = z.infer<typeof timeEntrySchema>;
+
+export const insertTimeEntrySchema = timeEntrySchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertTimeEntry = z.infer<typeof insertTimeEntrySchema>;
+
+// Template schema for reusable project/task templates
+export const templateSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1, "Template name is required"),
+  description: z.string().optional(),
+  type: z.enum(["project", "task"]),
+  template: z.record(z.any()), // JSON template data
+  isPublic: z.boolean().default(false),
+  ownerId: z.string(),
+  tags: z.array(z.string()).default([]),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+});
+export type Template = z.infer<typeof templateSchema>;
+
+export const insertTemplateSchema = templateSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertTemplate = z.infer<typeof insertTemplateSchema>;
+
+// Notification schema
+export const notificationSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  title: z.string(),
+  message: z.string(),
+  type: z.enum(["task_assigned", "task_completed", "project_updated", "comment_added", "deadline_approaching"]),
+  entityId: z.string().optional(), // ID of related task/project/etc
+  read: z.boolean().default(false),
+  createdAt: z.string().datetime(),
+});
+export type Notification = z.infer<typeof notificationSchema>;
+
+export const insertNotificationSchema = notificationSchema.omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
 // AI Suggestion schema
 export const aiSuggestionSchema = z.object({
