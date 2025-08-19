@@ -40,8 +40,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  app.get('/api/auth/login', (req: any, res) => {
+  // Login routes - support both /api/login and /api/auth/login for compatibility
+  app.get('/api/login', (req: any, res) => {
     // For development - just redirect back to home with setup flag
+    res.redirect('/?setup=google');
+  });
+
+  app.get('/api/auth/login', (req: any, res) => {
+    // For development - just redirect back to home with setup flag  
     res.redirect('/?setup=google');
   });
 
