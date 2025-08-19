@@ -1,7 +1,14 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+// Simple auth setup
+const isAuthenticated = (req: any, res: any, next: any) => {
+  if (req.session?.user) {
+    next();
+  } else {
+    res.status(401).json({ message: "Unauthorized" });
+  }
+};
 import { aiService } from "./services/aiService";
 import Stripe from "stripe";
 
@@ -14,19 +21,78 @@ import { insertProjectSchema, insertTaskSchema, insertCommentSchema } from "@sha
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware
-  await setupAuth(app);
+  // Session setup for simple auth
+  app.use(require('express-session')({
+    secret: process.env.SESSION_SECRET || 'dev-secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false }
+  }));
 
-  // Auth routes
+  // Simple auth routes for development
+  app.get('/api/auth/status', (req: any, res) => {
+    res.json({
+      isAuthenticated: !!req.session?.user,
+      hasGoogleConfig: !!req.session?.googleConfig,
+      user: req.session?.user || null
+    });
+  });
+
+  app.get('/api/auth/login', (req: any, res) => {
+    // For development - simulate login redirect
+    res.redirect('/?google-auth-setup=true');
+  });
+
+  app.post('/api/auth/google-config', async (req: any, res) => {
+    try {
+      const { apiKey, clientId, clientSecret } = req.body;
+      
+      // Simulate user creation for development
+      const mockUser = {
+        id: 'dev-user-123',
+        email: 'dev@example.com',
+        firstName: 'Development',
+        lastName: 'User',
+        profileImageUrl: null,
+        subscriptionTier: 'free'
+      };
+
+      // Store in session
+      req.session.googleConfig = { apiKey, clientId, clientSecret };
+      req.session.user = mockUser;
+      
+      // Store in database
+      await storage.upsertUser({
+        ...mockUser,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+
+      res.json({ success: true, user: mockUser });
+    } catch (error) {
+      console.error("Error setting up Google config:", error);
+      res.status(500).json({ error: 'Failed to setup Google configuration' });
+    }
+  });
+
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
+      const user = req.session.user;
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
     }
+  });
+
+  app.post('/api/auth/logout', (req: any, res) => {
+    req.session.destroy((err: any) => {
+      if (err) {
+        res.status(500).json({ error: 'Failed to logout' });
+      } else {
+        res.json({ success: true });
+      }
+    });
   });
 
   // Subscription routes - Stripe based
