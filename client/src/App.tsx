@@ -9,6 +9,7 @@ import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import ProjectPage from "@/pages/project";
+import Pricing from "@/pages/pricing";
 
 function Router() {
   const { isAuthenticated, isLoading, hasGoogleConfig } = useAuth();
@@ -28,7 +29,10 @@ function Router() {
   return (
     <Switch>
       {!isAuthenticated ? (
-        <Route path="/" component={Landing} />
+        <>
+          <Route path="/" component={Landing} />
+          <Route path="/pricing" component={Pricing} />
+        </>
       ) : !hasGoogleConfig ? (
         <Route path="/">
           <GoogleConfig onConfigSubmit={submitConfig} isLoading={configLoading} />
@@ -38,6 +42,7 @@ function Router() {
           <Route path="/" component={Dashboard} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/project/:id" component={ProjectPage} />
+          <Route path="/pricing" component={Pricing} />
           {/* Add more authenticated routes here */}
         </>
       )}

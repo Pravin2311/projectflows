@@ -1,11 +1,4 @@
 import {
-  users,
-  projects,
-  projectMembers,
-  tasks,
-  comments,
-  activities,
-  aiSuggestions,
   type User,
   type UpsertUser,
   type Project,
@@ -20,6 +13,8 @@ import {
   type InsertActivity,
   type AiSuggestion,
   type InsertAiSuggestion,
+  type SubscriptionPlan,
+  type UsageTracking,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -61,6 +56,12 @@ export interface IStorage {
   createAiSuggestion(suggestion: InsertAiSuggestion): Promise<AiSuggestion>;
   getProjectAiSuggestions(projectId: string): Promise<AiSuggestion[]>;
   updateAiSuggestion(id: string, updates: Partial<InsertAiSuggestion>): Promise<AiSuggestion>;
+  
+  // Subscription operations
+  updateUserSubscription(userId: string, updates: Partial<UpsertUser>): Promise<User>;
+  getUserUsage(userId: string, month: string): Promise<UsageTracking>;
+  updateUsage(userId: string, month: string, updates: Partial<UsageTracking>): Promise<UsageTracking>;
+  getSubscriptionPlans(): Promise<SubscriptionPlan[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -71,6 +72,59 @@ export class MemStorage implements IStorage {
   private comments: Map<string, Comment> = new Map();
   private activities: Map<string, Activity> = new Map();
   private aiSuggestions: Map<string, AiSuggestion> = new Map();
+  private usage: Map<string, UsageTracking> = new Map(); // userId-month as key
+  
+  // Static subscription plans
+  private subscriptionPlans: SubscriptionPlan[] = [
+    {
+      id: "free",
+      name: "Free",
+      description: "Perfect for personal projects and trying out the platform",
+      price: 0,
+      tier: "free",
+      popular: false,
+      features: [
+        "Unlimited projects in your Google Drive",
+        "Basic kanban boards",
+        "Team collaboration via email",
+        "Basic Google Drive integration",
+        "Community support"
+      ]
+    },
+    {
+      id: "managed_api",
+      name: "Managed API",
+      description: "Skip the technical setup - we handle Google API configuration",
+      price: 9,
+      tier: "managed_api", 
+      popular: true,
+      features: [
+        "Everything in Free",
+        "Pre-configured Google API access",
+        "Higher API rate limits",
+        "No technical setup required",
+        "Priority email support",
+        "Advanced Google Drive features"
+      ]
+    },
+    {
+      id: "premium", 
+      name: "Premium",
+      description: "Advanced features for power users and teams",
+      price: 19,
+      tier: "premium",
+      popular: false,
+      features: [
+        "Everything in Managed API",
+        "AI-powered project insights",
+        "Custom automations and workflows", 
+        "Advanced reporting and analytics",
+        "Custom integrations (Slack, Discord)",
+        "Time tracking and productivity metrics",
+        "Priority chat support"
+      ]
+    }
+  ];
 
   // User operations
   async getUser(id: string): Promise<User | undefined> {
@@ -79,11 +133,12 @@ export class MemStorage implements IStorage {
 
   async upsertUser(userData: UpsertUser): Promise<User> {
     const existingUser = this.users.get(userData.id!);
+    const now = new Date().toISOString();
     const user: User = {
       ...userData,
       id: userData.id || randomUUID(),
-      createdAt: existingUser?.createdAt || new Date(),
-      updatedAt: new Date(),
+      createdAt: existingUser?.createdAt || now,
+      updatedAt: now,
     } as User;
     this.users.set(user.id, user);
     return user;
@@ -92,11 +147,13 @@ export class MemStorage implements IStorage {
   // Project operations
   async createProject(projectData: InsertProject): Promise<Project> {
     const id = randomUUID();
+    const now = new Date().toISOString();
     const project: Project = {
       ...projectData,
       id,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      driveFileId: `temp-${id}`, // Will be updated with actual Google Drive file ID
+      createdAt: now,
+      updatedAt: now,
     };
     this.projects.set(id, project);
     
@@ -130,7 +187,7 @@ export class MemStorage implements IStorage {
     const updated: Project = {
       ...existing,
       ...updates,
-      updatedAt: new Date(),
+      updatedAt: new Date().toISOString(),
     };
     this.projects.set(id, updated);
     return updated;
@@ -154,7 +211,7 @@ export class MemStorage implements IStorage {
     const member: ProjectMember = {
       ...memberData,
       id,
-      joinedAt: new Date(),
+      joinedAt: new Date().toISOString(),
     };
     this.projectMembers.set(id, member);
     return member;
@@ -187,11 +244,12 @@ export class MemStorage implements IStorage {
   // Task operations
   async createTask(taskData: InsertTask): Promise<Task> {
     const id = randomUUID();
+    const now = new Date().toISOString();
     const task: Task = {
       ...taskData,
       id,
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
     };
     this.tasks.set(id, task);
     return task;
@@ -219,7 +277,7 @@ export class MemStorage implements IStorage {
     const updated: Task = {
       ...existing,
       ...updates,
-      updatedAt: new Date(),
+      updatedAt: new Date().toISOString(),
     };
     this.tasks.set(id, updated);
     return updated;
@@ -239,7 +297,7 @@ export class MemStorage implements IStorage {
     const comment: Comment = {
       ...commentData,
       id,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     };
     this.comments.set(id, comment);
     return comment;
@@ -261,7 +319,7 @@ export class MemStorage implements IStorage {
     const activity: Activity = {
       ...activityData,
       id,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     };
     this.activities.set(id, activity);
     return activity;
@@ -270,7 +328,7 @@ export class MemStorage implements IStorage {
   async getProjectActivities(projectId: string, limit = 20): Promise<(Activity & { user?: User })[]> {
     const projectActivities = Array.from(this.activities.values())
       .filter(activity => activity.projectId === projectId)
-      .sort((a, b) => b.createdAt!.getTime() - a.createdAt!.getTime())
+      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
       .slice(0, limit);
     
     return projectActivities.map(activity => ({
@@ -285,7 +343,7 @@ export class MemStorage implements IStorage {
     const suggestion: AiSuggestion = {
       ...suggestionData,
       id,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     };
     this.aiSuggestions.set(id, suggestion);
     return suggestion;
@@ -294,7 +352,7 @@ export class MemStorage implements IStorage {
   async getProjectAiSuggestions(projectId: string): Promise<AiSuggestion[]> {
     return Array.from(this.aiSuggestions.values())
       .filter(suggestion => suggestion.projectId === projectId && !suggestion.dismissedAt)
-      .sort((a, b) => b.createdAt!.getTime() - a.createdAt!.getTime());
+      .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime());
   }
 
   async updateAiSuggestion(id: string, updates: Partial<InsertAiSuggestion>): Promise<AiSuggestion> {
@@ -307,6 +365,57 @@ export class MemStorage implements IStorage {
     };
     this.aiSuggestions.set(id, updated);
     return updated;
+  }
+
+  // Subscription operations
+  async updateUserSubscription(userId: string, updates: Partial<UpsertUser>): Promise<User> {
+    const existing = this.users.get(userId);
+    if (!existing) throw new Error("User not found");
+    
+    const updated: User = {
+      ...existing,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    };
+    this.users.set(userId, updated);
+    return updated;
+  }
+
+  async getUserUsage(userId: string, month: string): Promise<UsageTracking> {
+    const key = `${userId}-${month}`;
+    const existing = this.usage.get(key);
+    
+    if (existing) return existing;
+    
+    // Create new usage tracking for the month
+    const newUsage: UsageTracking = {
+      userId,
+      month,
+      googleDriveRequests: 0,
+      geminiRequests: 0,
+      projectsCreated: 0,
+      storageUsed: 0,
+    };
+    
+    this.usage.set(key, newUsage);
+    return newUsage;
+  }
+
+  async updateUsage(userId: string, month: string, updates: Partial<UsageTracking>): Promise<UsageTracking> {
+    const key = `${userId}-${month}`;
+    const existing = await this.getUserUsage(userId, month);
+    
+    const updated: UsageTracking = {
+      ...existing,
+      ...updates,
+    };
+    
+    this.usage.set(key, updated);
+    return updated;
+  }
+
+  async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
+    return this.subscriptionPlans;
   }
 }
 

@@ -15,10 +15,21 @@ export const userSchema = z.object({
   firstName: z.string().optional(),
   lastName: z.string().optional(),
   profileImageUrl: z.string().optional(),
+  subscriptionTier: z.enum(["free", "managed_api", "premium"]).default("free"),
+  subscriptionStatus: z.enum(["active", "cancelled", "expired"]).optional(),
+  subscriptionExpiry: z.string().datetime().optional(),
+  stripeCustomerId: z.string().optional(),
+  stripeSubscriptionId: z.string().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
 export type User = z.infer<typeof userSchema>;
+
+export const upsertUserSchema = userSchema.omit({
+  createdAt: true,
+  updatedAt: true,
+});
+export type UpsertUser = z.infer<typeof upsertUserSchema>;
 
 // Project schema for Google Drive storage
 export const projectSchema = z.object({
@@ -148,3 +159,26 @@ export const projectDataSchema = z.object({
   aiSuggestions: z.array(aiSuggestionSchema),
 });
 export type ProjectData = z.infer<typeof projectDataSchema>;
+
+// Subscription Plans
+export const subscriptionPlanSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  price: z.number(),
+  features: z.array(z.string()),
+  tier: z.enum(["free", "managed_api", "premium"]),
+  popular: z.boolean().default(false),
+});
+export type SubscriptionPlan = z.infer<typeof subscriptionPlanSchema>;
+
+// Usage tracking for API limits
+export const usageTrackingSchema = z.object({
+  userId: z.string(),
+  month: z.string(), // YYYY-MM format
+  googleDriveRequests: z.number().default(0),
+  geminiRequests: z.number().default(0),
+  projectsCreated: z.number().default(0),
+  storageUsed: z.number().default(0), // in bytes
+});
+export type UsageTracking = z.infer<typeof usageTrackingSchema>;

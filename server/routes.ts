@@ -22,6 +22,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Subscription routes
+  app.get('/api/subscription/plans', async (req, res) => {
+    try {
+      const plans = await storage.getSubscriptionPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error("Error fetching subscription plans:", error);
+      res.status(500).json({ message: "Failed to fetch subscription plans" });
+    }
+  });
+
+  app.post('/api/subscription/create', isAuthenticated, async (req: any, res) => {
+    try {
+      const { planId } = req.body;
+      const userId = req.user.claims.sub;
+      
+      // TODO: Implement Stripe subscription creation when keys are available
+      // For now, return a placeholder response
+      res.json({ 
+        message: "Subscription creation will be available once Stripe is configured",
+        planId,
+        userId 
+      });
+    } catch (error) {
+      console.error("Error creating subscription:", error);
+      res.status(500).json({ message: "Failed to create subscription" });
+    }
+  });
+
+  app.get('/api/subscription/usage', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+      
+      const usage = await storage.getUserUsage(userId, currentMonth);
+      res.json(usage);
+    } catch (error) {
+      console.error("Error fetching usage:", error);
+      res.status(500).json({ message: "Failed to fetch usage data" });
+    }
+  });
+
   // Project routes
   app.post("/api/projects", isAuthenticated, async (req: any, res) => {
     try {
@@ -125,17 +167,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const member = await storage.addProjectMember({
         projectId,
-        userId: targetUser.id,
+        userId: (targetUser as any).id,
         role,
       });
       
       // Create activity
       await storage.createActivity({
         type: "member_added",
-        description: `Added ${targetUser.firstName} ${targetUser.lastName} to the project`,
+        description: `Added ${(targetUser as any).firstName || (targetUser as any).email} to the project`,
         projectId,
         userId,
-        entityId: targetUser.id,
+        entityId: (targetUser as any).id,
       });
       
       res.json(member);

@@ -10,7 +10,8 @@ import {
   ArrowRight,
   Star,
   Globe,
-  Lock
+  Lock,
+  Settings
 } from "lucide-react";
 
 export default function Landing() {
@@ -29,13 +30,22 @@ export default function Landing() {
               <h1 className="text-xl font-bold text-gray-900">ProjectFlow</h1>
             </div>
             
-            <Button 
-              onClick={handleLogin}
-              data-testid="button-login"
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              Get Started Free
-            </Button>
+            <div className="flex items-center space-x-4">
+              <Button 
+                variant="ghost"
+                onClick={() => window.location.href = "/pricing"}
+                data-testid="button-pricing"
+              >
+                Pricing
+              </Button>
+              <Button 
+                onClick={handleLogin}
+                data-testid="button-login"
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Get Started Free
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -75,10 +85,75 @@ export default function Landing() {
                 variant="outline" 
                 size="lg"
                 className="text-lg px-8"
+                onClick={() => window.location.href = "/pricing"}
+                data-testid="button-view-pricing"
               >
-                Learn More
+                View Pricing
               </Button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Managed API Service Highlight */}
+      <section className="py-16 bg-blue-50 dark:bg-blue-900/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="max-w-4xl mx-auto">
+            <div className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-full text-sm font-medium mb-6">
+              <Zap className="h-4 w-4 mr-2" />
+              Most Popular - Managed API Service
+            </div>
+            
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
+              Skip the Technical Setup
+            </h2>
+            
+            <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
+              Don't want to deal with Google API keys and OAuth configuration? 
+              Our Managed API service handles all the technical complexity for just <strong>$9/month</strong>.
+            </p>
+            
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
+                <div className="text-blue-600 mb-3">
+                  <Settings className="h-8 w-8 mx-auto" />
+                </div>
+                <h3 className="font-semibold mb-2">Zero Configuration</h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  No Google API setup required. Start using immediately.
+                </p>
+              </div>
+              
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
+                <div className="text-blue-600 mb-3">
+                  <Zap className="h-8 w-8 mx-auto" />
+                </div>
+                <h3 className="font-semibold mb-2">Higher Limits</h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  10x more API calls than free Google tier.
+                </p>
+              </div>
+              
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
+                <div className="text-blue-600 mb-3">
+                  <Shield className="h-8 w-8 mx-auto" />
+                </div>
+                <h3 className="font-semibold mb-2">Data Still Yours</h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  Your projects remain in your Google Drive.
+                </p>
+              </div>
+            </div>
+            
+            <Button 
+              size="lg"
+              className="bg-blue-600 hover:bg-blue-700 text-lg px-8"
+              onClick={() => window.location.href = "/pricing"}
+              data-testid="button-managed-api-cta"
+            >
+              Try Managed API Service
+              <ArrowRight className="h-5 w-5 ml-2" />
+            </Button>
           </div>
         </div>
       </section>
