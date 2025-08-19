@@ -55,12 +55,21 @@ export default function Pricing() {
       } else {
         throw new Error(data.message || 'Failed to create payment intent');
       }
-    } catch (error) {
-      toast({
-        title: "Upgrade Failed",
-        description: "Please try again or contact support.",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      // Handle specific Stripe configuration error
+      if (error.message?.includes('Stripe not configured')) {
+        toast({
+          title: "Payment System Not Ready",
+          description: "Stripe payments are being set up. Please try again later or contact support.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Upgrade Failed",
+          description: error.message || "Please try again or contact support.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsUpgrading(null);
     }
