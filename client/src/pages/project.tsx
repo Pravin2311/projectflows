@@ -462,6 +462,14 @@ export default function ProjectPage() {
                 </Button>
               )}
               
+              {/* AI Insights Button */}
+              <Link href={`/project/${projectId}/insights`}>
+                <Button variant="outline" size="sm" data-testid="button-ai-insights">
+                  <Brain className="h-4 w-4 mr-2" />
+                  AI Insights
+                </Button>
+              </Link>
+
               {/* Invite Team Member Button */}
               <Dialog open={isInviteMemberOpen} onOpenChange={setIsInviteMemberOpen}>
                 <DialogTrigger asChild>

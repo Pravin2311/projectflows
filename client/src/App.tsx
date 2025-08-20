@@ -12,6 +12,7 @@ import ProjectPage from "@/pages/project";
 import Pricing from "@/pages/pricing";
 import InvitePage from "@/pages/invite";
 import GoogleAppsPage from "@/pages/google-apps";
+import ProjectInsightsPage from "@/pages/project-insights";
 
 function Router() {
   const { isAuthenticated, isLoading, hasGoogleConfig } = useAuth();
@@ -45,6 +46,7 @@ function Router() {
           <Route path="/" component={Dashboard} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/project/:id" component={ProjectPage} />
+          <Route path="/project/:id/insights" component={ProjectInsightsPage} />
           <Route path="/google-apps" component={GoogleAppsPage} />
           <Route path="/pricing" component={Pricing} />
           <Route path="/invite/:id" component={InvitePage} />

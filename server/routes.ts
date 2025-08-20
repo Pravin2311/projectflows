@@ -19,6 +19,7 @@ import { GoogleTasksService } from "./services/googleTasksService";
 import { GoogleCalendarService } from "./services/googleCalendarService";
 import { GoogleDocsService } from "./services/googleDocsService";
 import { GoogleSheetsService } from "./services/googleSheetsService";
+import { AIInsightsService } from "./services/aiInsightsService";
 
 import session from 'express-session';
 
@@ -1700,6 +1701,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error syncing tasks to sheets:', error);
       res.status(500).json({ error: 'Failed to sync tasks to spreadsheet' });
+    }
+  });
+
+  // AI-Powered Insights Routes
+  app.get("/api/projects/:id/ai-insights", isAuthenticated, async (req: any, res) => {
+    try {
+      const projectId = req.params.id;
+      const userId = req.session.user.id;
+      
+      // Check if user has access to project
+      const membership = await storage.getUserProjectRole(projectId, userId);
+      if (!membership) {
+        return res.status(403).json({ error: "Access denied to this project" });
+      }
+      
+      // Get Google API config (with Gemini API key)
+      let googleConfig = req.session?.googleConfig;
+      
+      // If no config in session, try to inherit from project
+      if (!googleConfig) {
+        const project = await storage.getProject(projectId);
+        googleConfig = project?.googleApiConfig;
+      }
+      
+      if (!googleConfig?.geminiApiKey) {
+        return res.status(400).json({ 
+          error: "Google AI API key not configured. Please set up your Google API credentials with Gemini API key." 
+        });
+      }
+      
+      // Fetch project data
+      const project = await storage.getProject(projectId);
+      const tasks = await storage.getProjectTasks(projectId);
+      const members = await storage.getProjectMembers(projectId);
+      
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+      
+      // Generate AI insights
+      const aiService = new AIInsightsService(googleConfig.geminiApiKey);
+      const insights = await aiService.generateProjectInsights(project, tasks, members);
+      
+      res.json(insights);
+    } catch (error: any) {
+      console.error("Error generating AI insights:", error);
+      res.status(500).json({ 
+        error: "Failed to generate AI insights", 
+        details: error.message 
+      });
+    }
+  });
+
+  app.get("/api/projects/:id/workload-analysis", isAuthenticated, async (req: any, res) => {
+    try {
+      const projectId = req.params.id;
+      const userId = req.session.user.id;
+      
+      // Check if user has access to project
+      const membership = await storage.getUserProjectRole(projectId, userId);
+      if (!membership) {
+        return res.status(403).json({ error: "Access denied to this project" });
+      }
+      
+      // Get Google API config (with Gemini API key)
+      let googleConfig = req.session?.googleConfig;
+      
+      // If no config in session, try to inherit from project
+      if (!googleConfig) {
+        const project = await storage.getProject(projectId);
+        googleConfig = project?.googleApiConfig;
+      }
+      
+      if (!googleConfig?.geminiApiKey) {
+        return res.status(400).json({ 
+          error: "Google AI API key not configured. Please set up your Google API credentials with Gemini API key." 
+        });
+      }
+      
+      // Fetch project data
+      const tasks = await storage.getProjectTasks(projectId);
+      const members = await storage.getProjectMembers(projectId);
+      
+      // Generate workload analysis
+      const aiService = new AIInsightsService(googleConfig.geminiApiKey);
+      const analysis = await aiService.generateWorkloadAnalysis(members, tasks);
+      
+      res.json(analysis);
+    } catch (error: any) {
+      console.error("Error generating workload analysis:", error);
+      res.status(500).json({ 
+        error: "Failed to generate workload analysis", 
+        details: error.message 
+      });
     }
   });
 
