@@ -168,7 +168,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Platform OAuth not configured' });
       }
       
-      const redirectUri = `${req.protocol}://${req.get('host')}/platform-oauth-callback`;
+      // Force HTTPS for production, but support HTTP for local development
+      const protocol = req.get('host')?.includes('replit.dev') ? 'https' : req.protocol;
+      const redirectUri = `${protocol}://${req.get('host')}/platform-oauth-callback`;
       
       const params = new URLSearchParams({
         client_id: PLATFORM_CLIENT_ID,
@@ -225,7 +227,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `);
       }
       
-      const redirectUri = `${req.protocol}://${req.get('host')}/platform-oauth-callback`;
+      // Force HTTPS for production, but support HTTP for local development
+      const protocol = req.get('host')?.includes('replit.dev') ? 'https' : req.protocol;
+      const redirectUri = `${protocol}://${req.get('host')}/platform-oauth-callback`;
 
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',

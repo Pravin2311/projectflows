@@ -1,36 +1,29 @@
 # URGENT: Fix redirect_uri_mismatch Error
 
-## The Problem
-Google OAuth requires the exact callback URL to be registered in Google Cloud Console. The platform is trying to use `/platform-oauth-callback` but it's not registered.
-
-## The Solution
-Add your current domain's callback URL to Google Cloud Console.
-
-## Steps to Fix:
-
-### 1. Get Your Current Replit URL
-Look at your browser address bar. It should look like:
+## Current Error Analysis
+From your error screenshot, Google is expecting this redirect URI:
 ```
-https://abc123-def456.replit.dev/projects/...
+http://5b5f8299-7c4a-4f25-b4fb-278dcff8b581-00-xwv50dvel03x.kirk.replit.dev/platform-oauth-callback
 ```
 
-Your domain is: `https://abc123-def456.replit.dev`
+## Quick Fix - Add BOTH URLs to Google Cloud Console
 
-### 2. Add Callback URL to Google Cloud Console
+You need to add BOTH HTTP and HTTPS versions:
+
+### 1. Add These Exact URLs to Google Cloud Console
 1. **Go to**: [Google Cloud Console Credentials](https://console.cloud.google.com/apis/credentials)
 2. **Click** on your OAuth 2.0 Client ID
-3. **In "Authorized redirect URIs"**, click "ADD URI"
-4. **Add this exact URL** (replace with your actual domain):
+3. **In "Authorized redirect URIs"**, add BOTH of these:
+
    ```
-   https://YOUR-ACTUAL-REPL-URL.replit.dev/platform-oauth-callback
+   http://5b5f8299-7c4a-4f25-b4fb-278dcff8b581-00-xwv50dvel03x.kirk.replit.dev/platform-oauth-callback
    ```
    
-   For example, if your Replit URL is `https://abc123-def456.replit.dev`, then add:
    ```
-   https://abc123-def456.replit.dev/platform-oauth-callback
+   https://5b5f8299-7c4a-4f25-b4fb-278dcff8b581-00-xwv50dvel03x.kirk.replit.dev/platform-oauth-callback
    ```
 
-5. **Click "Save"**
+4. **Click "Save"**
 
 ### 3. Test Again
 After saving in Google Cloud Console:
