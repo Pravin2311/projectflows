@@ -126,18 +126,18 @@ export default function ProjectPage() {
     mutationFn: async () => {
       // Only use project-specific return URL if we have a valid project ID
       const returnUrl = projectId && projectId !== 'undefined' ? `/project/${projectId}` : '/dashboard';
-      return await apiRequest("POST", "/api/auth/reauthorize-gmail", {
+      const response = await apiRequest("POST", "/api/auth/reauthorize-gmail", {
         returnUrl
       });
+      return await response.json();
     },
     onSuccess: (data: any) => {
-      console.log('Gmail reauth response:', data);
+      console.log('Gmail reauth data:', data);
       if (data.authUrl) {
         console.log('Redirecting to Google OAuth:', data.authUrl);
-        // Force a fresh window to bypass any cached authorizations
-        window.open(data.authUrl, '_self');
+        window.location.href = data.authUrl;
       } else {
-        console.error('No authUrl received');
+        console.error('No authUrl in response:', data);
       }
     },
     onError: (error: Error) => {

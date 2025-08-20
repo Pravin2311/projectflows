@@ -1,0 +1,64 @@
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+2stripe.js:1 Uncaught (in promise) IntegrationError: Please call Stripe() with your publishable key. You used an empty string.Understand this error
+@radix-ui_react-dialog.js?v=6799eac1:1412 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ @radix-ui_react-dialog.js?v=6799eac1:1412Understand this warning
+project.tsx:134 Gmail reauth response: Response
+project.tsx:140 No authUrl received
+onSuccess @ project.tsx:140Understand this error
+project.tsx:134 Gmail reauth response: Response
+project.tsx:140 No authUrl received
+onSuccess @ project.tsx:140Understand this error
+project.tsx:134 Gmail reauth response: Response
+project.tsx:140 No authUrl received
+onSuccess @ project.tsx:140Understand this error
+project.tsx:134 Gmail reauth response: Response
+project.tsx:140 No authUrl received
+onSuccess @ project.tsx:140Understand this error
+project.tsx:134 Gmail reauth response: Response {type: 'basic', url: 'https://5b5f8299-7c4a-4f25-b4fb-278dcff8b581-00-xw…vel03x.kirk.replit.dev/api/auth/reauthorize-gmail', redirected: false, status: 200, ok: true, …}
+project.tsx:140 No authUrl received
+onSuccess @ project.tsx:140
+execute @ @tanstack_react-query.js?v=6799eac1:1233
+await in execute
+mutate @ @tanstack_react-query.js?v=6799eac1:2630
+(anonymous) @ @tanstack_react-query.js?v=6799eac1:3295
+onClick @ project.tsx:416
+callCallback2 @ chunk-RPCDYKBN.js?v=6799eac1:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=6799eac1:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=6799eac1:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=6799eac1:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=6799eac1:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=6799eac1:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=6799eac1:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=6799eac1:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=6799eac1:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=6799eac1:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=6799eac1:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=6799eac1:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=6799eac1:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=6799eac1:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=6799eac1:5449Understand this error
+project.tsx:134 Gmail reauth response: Response {type: 'basic', url: 'https://5b5f8299-7c4a-4f25-b4fb-278dcff8b581-00-xw…vel03x.kirk.replit.dev/api/auth/reauthorize-gmail', redirected: false, status: 200, ok: true, …}
+project.tsx:140 No authUrl received
+onSuccess @ project.tsx:140
+execute @ @tanstack_react-query.js?v=6799eac1:1233
+await in execute
+mutate @ @tanstack_react-query.js?v=6799eac1:2630
+(anonymous) @ @tanstack_react-query.js?v=6799eac1:3295
+onClick @ project.tsx:416
+callCallback2 @ chunk-RPCDYKBN.js?v=6799eac1:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=6799eac1:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=6799eac1:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=6799eac1:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=6799eac1:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=6799eac1:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=6799eac1:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=6799eac1:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=6799eac1:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=6799eac1:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=6799eac1:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=6799eac1:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=6799eac1:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=6799eac1:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=6799eac1:5449Understand this error
+project.tsx:134 Gmail reauth response: Response {type: 'basic', url: 'https://5b5f8299-7c4a-4f25-b4fb-278dcff8b581-00-xw…vel03x.kirk.replit.dev/api/auth/reauthorize-gmail', redirected: false, status: 200, ok: true, …}
+project.tsx:140 No authUrl received
