@@ -417,10 +417,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.session.user.id;
       const taskId = req.params.id;
       
+      console.log("Route: Received task update request for:", taskId, "with body:", req.body);
+      
       const task = await storage.getTask(taskId);
       if (!task) {
         return res.status(404).json({ message: "Task not found" });
       }
+      
+      console.log("Route: Found existing task:", task);
       
       // Check if user has access to project
       const membership = await storage.getUserProjectRole(task.projectId, userId);
@@ -430,6 +434,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const updates = req.body;
       const updatedTask = await storage.updateTask(taskId, updates);
+      
+      console.log("Route: Task updated successfully, sending response:", updatedTask);
       
       // Create activity for status changes
       if (updates.status && updates.status !== task.status) {

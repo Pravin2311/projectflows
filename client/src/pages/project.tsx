@@ -118,15 +118,15 @@ export default function ProjectPage() {
   // Update task status mutation
   const updateTaskMutation = useMutation({
     mutationFn: async ({ taskId, updates }: { taskId: string; updates: Partial<Task> }) => {
-      console.log("Updating task:", taskId, "with updates:", updates);
-      const response = await apiRequest("PATCH", `/api/tasks/${taskId}`, updates);
+      console.log("Frontend: Updating task:", taskId, "with updates:", updates);
+      const response = await apiRequest("PUT", `/api/tasks/${taskId}`, updates);
+      console.log("Frontend: Server response:", response);
       return response;
     },
     onSuccess: (updatedTask) => {
-      console.log("Task update successful:", updatedTask);
-      // Don't immediately refetch since we already have optimistic update
-      // Just invalidate to ensure next natural refetch gets fresh data
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/tasks`] });
+      console.log("Task update successful, response:", updatedTask);
+      // Force refetch to get the updated task from server
+      queryClient.refetchQueries({ queryKey: [`/api/projects/${projectId}/tasks`] });
       toast({
         title: "Task updated",
         description: "Task status changed successfully.",
@@ -160,14 +160,7 @@ export default function ProjectPage() {
   const handleUpdateTaskStatus = async (taskId: string, status: "todo" | "in_progress" | "done") => {
     console.log("Status update clicked:", taskId, "->", status);
     
-    // Optimistically update the UI first
-    const currentTasks = queryClient.getQueryData<Task[]>([`/api/projects/${projectId}/tasks`]) || [];
-    const updatedTasks = currentTasks.map(task => 
-      task.id === taskId ? { ...task, status } : task
-    );
-    queryClient.setQueryData([`/api/projects/${projectId}/tasks`], updatedTasks);
-    
-    // Then update the server
+    // Update the server directly - remove optimistic update to debug
     updateTaskMutation.mutate({ taskId, updates: { status } });
   };
 
