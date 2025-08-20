@@ -117,10 +117,27 @@ export function setupGoogleAuth(app: Express) {
   // Google OAuth callback route
   app.get('/api/auth/callback', async (req, res) => {
     try {
-      const { code } = req.query;
+      const { code, error } = req.query;
       const googleConfig = (req.session as any).googleConfig;
 
+      console.log('OAuth callback received:', { 
+        hasCode: !!code, 
+        hasError: !!error, 
+        hasGoogleConfig: !!googleConfig,
+        error: error,
+        queryParams: req.query,
+        userAgent: req.get('User-Agent'),
+        referrer: req.get('Referer'),
+        timestamp: new Date().toISOString()
+      });
+
+      if (error) {
+        console.log('OAuth error received:', error);
+        return res.redirect('/?error=oauth_denied');
+      }
+
       if (!googleConfig || !code) {
+        console.log('Missing config or code in callback');
         return res.redirect('/?error=auth_failed');
       }
 

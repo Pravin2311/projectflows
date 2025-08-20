@@ -131,7 +131,14 @@ export default function ProjectPage() {
       });
     },
     onSuccess: (data: any) => {
-      window.location.href = data.authUrl;
+      console.log('Gmail reauth response:', data);
+      if (data.authUrl) {
+        console.log('Redirecting to Google OAuth:', data.authUrl);
+        // Force a fresh window to bypass any cached authorizations
+        window.open(data.authUrl, '_self');
+      } else {
+        console.error('No authUrl received');
+      }
     },
     onError: (error: Error) => {
       toast({
