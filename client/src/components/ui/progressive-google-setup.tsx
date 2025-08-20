@@ -24,6 +24,7 @@ export function ProgressiveGoogleSetup({ onConfigSubmit, initialConfig, isLoadin
     clientId: initialConfig?.clientId || "",
     clientSecret: initialConfig?.clientSecret || "",
     geminiApiKey: initialConfig?.geminiApiKey || "",
+    email: "", // Add email field for Gmail login
   });
   
   const [enabledApis, setEnabledApis] = useState(initialConfig?.enabledApis || {
@@ -212,6 +213,23 @@ export function ProgressiveGoogleSetup({ onConfigSubmit, initialConfig, isLoadin
                 </Alert>
 
                 <form onSubmit={handleInitialSubmit} className="space-y-4">
+                  {/* Gmail Account Field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Gmail Account</Label>
+                    <Input
+                      id="email"
+                      data-testid="input-email"
+                      type="email"
+                      placeholder="Enter your Gmail address (e.g., user@gmail.com)"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange("email", e.target.value)}
+                      className="w-full"
+                    />
+                    <p className="text-sm text-gray-500">
+                      This Gmail account will be used to automatically check for project invitations
+                    </p>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="apiKey">Google API Key</Label>

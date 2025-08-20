@@ -383,13 +383,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/google-config', async (req: any, res) => {
     try {
-      const { apiKey, clientId, clientSecret } = req.body;
+      const { apiKey, clientId, clientSecret, email } = req.body;
       
-      // Simulate user creation for development
-      const mockUser = {
-        id: 'dev-user-123',
-        email: 'dev@example.com',
-        firstName: 'Development',
+      // Check if this email has pending invitations or project access
+      const projectsForEmail = await storage.getProjectsForEmail(email || 'dev@example.com');
+      
+      // Create user record
+      const userData = {
+        id: email || 'dev-user-123',
+        email: email || 'dev@example.com',
+        firstName: email ? email.split('@')[0] : 'Development',
         lastName: 'User',
         profileImageUrl: undefined,
         subscriptionTier: 'free' as const
@@ -397,12 +400,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Store in session
       req.session.googleConfig = { apiKey, clientId, clientSecret };
-      req.session.user = mockUser;
+      req.session.user = userData;
       
       // Store in database
-      await storage.upsertUser(mockUser);
+      await storage.upsertUser(userData);
 
-      res.json({ success: true, user: mockUser });
+      // If user has project invitations, automatically convert email-based memberships to proper user memberships
+      if (projectsForEmail.length > 0 && email) {
+        for (const project of projectsForEmail) {
+          const memStorage = storage as any;
+          const emailMember = Array.from(memStorage.projectMembers.values())
+            .find((member: any) => member.projectId === project.id && member.userId === email);
+          
+          if (emailMember) {
+            // Update membership to use proper user ID instead of email
+            (emailMember as any).userId = userData.id;
+            console.log(`✅ Converted email membership to user membership for project: ${project.name}`);
+          }
+        }
+
+        // Also update any pending invitations to accepted
+        const memStorage = storage as any;
+        const pendingInvitations = Array.from(memStorage.invitations.values())
+          .filter((inv: any) => inv.email === email && inv.status === 'pending');
+        
+        for (const invitation of pendingInvitations) {
+          (invitation as any).status = 'accepted';
+          console.log(`✅ Auto-accepted invitation for project: ${(invitation as any).projectId}`);
+        }
+      }
+
+      res.json({ 
+        success: true, 
+        user: userData,
+        projectCount: projectsForEmail.length,
+        hasProjectAccess: projectsForEmail.length > 0
+      });
     } catch (error) {
       console.error("Error setting up Google config:", error);
       res.status(500).json({ error: 'Failed to setup Google configuration' });
@@ -530,7 +563,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/projects", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.session.user.id;
-      const projects = await storage.getUserProjects(userId);
+      const userEmail = req.session.user.email;
+      
+      // Get projects where user is a member (by userId) or invited (by email)
+      let projects = await storage.getUserProjects(userId);
+      
+      // Also include projects where user was invited by email
+      if (userEmail) {
+        const emailProjects = await storage.getProjectsForEmail(userEmail);
+        
+        // Combine and deduplicate
+        const allProjects = [...projects, ...emailProjects];
+        projects = Array.from(new Set(allProjects.map(p => p.id)))
+          .map(id => allProjects.find(p => p.id === id)!)
+          .filter(Boolean);
+      }
+      
       res.json(projects);
     } catch (error) {
       console.error("Error fetching projects:", error);

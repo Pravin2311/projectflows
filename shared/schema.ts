@@ -33,6 +33,7 @@ export const minimalGoogleConfigSchema = z.object({
   clientId: z.string().min(1, "Google Client ID is required"),
   clientSecret: z.string().min(1, "Google Client Secret is required"),
   geminiApiKey: z.string().min(1, "Google AI (Gemini) API key is required"),
+  email: z.string().email("Valid Gmail address is required"),
 });
 export type MinimalGoogleConfig = z.infer<typeof minimalGoogleConfigSchema>;
 

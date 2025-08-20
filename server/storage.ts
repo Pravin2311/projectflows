@@ -134,6 +134,33 @@ export class MemStorage implements IStorage {
       .filter(Boolean) as Project[];
   }
 
+  // Get all projects where user email is invited (for Gmail login flow)
+  async getProjectsForEmail(email: string): Promise<Project[]> {
+    // First check direct memberships by email (invited members)
+    const emailMemberships = Array.from(this.projectMembers.values())
+      .filter(member => member.userId === email); // Email used as temp userId until proper login
+    
+    const emailProjects = emailMemberships
+      .map(member => this.projects.get(member.projectId))
+      .filter(Boolean) as Project[];
+
+    // Also check for pending invitations
+    const pendingInvitations = Array.from(this.invitations.values())
+      .filter(inv => inv.email === email && inv.status === 'pending');
+    
+    const invitedProjects = pendingInvitations
+      .map(inv => this.projects.get(inv.projectId))
+      .filter(Boolean) as Project[];
+
+    // Combine and deduplicate
+    const allProjects = [...emailProjects, ...invitedProjects];
+    const uniqueProjects = Array.from(new Set(allProjects.map(p => p.id)))
+      .map(id => allProjects.find(p => p.id === id)!)
+      .filter(Boolean);
+
+    return uniqueProjects;
+  }
+
   async updateProject(id: string, updates: Partial<Project>): Promise<Project> {
     const existing = this.projects.get(id);
     if (!existing) throw new Error("Project not found");
