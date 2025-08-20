@@ -705,18 +705,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Project not found" });
       }
 
-      // Create user session with email from invitation
+      // Create or get user record and session
+      let user;
+      try {
+        user = await storage.getUser(invitation.email);
+        if (!user) {
+          // Create new user record
+          user = await storage.upsertUser({
+            id: invitation.email,
+            email: invitation.email,
+            firstName: invitation.email.split('@')[0], // Use part before @ as name
+            lastName: ''
+          });
+          console.log(`✅ Created new user record for ${invitation.email}`);
+        }
+      } catch (error) {
+        console.error('Error creating user record:', error);
+        // Fallback to session-only user if storage fails
+        user = {
+          id: invitation.email,
+          email: invitation.email,
+          firstName: invitation.email.split('@')[0],
+          lastName: '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+      }
+
+      // Create user session
       req.session.user = {
-        id: invitation.email,
-        email: invitation.email,
-        firstName: invitation.email.split('@')[0], // Use part before @ as name
-        lastName: ''
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName || '',
+        lastName: user.lastName || ''
       };
 
       // Inherit project's Google configuration for seamless access
       if (project.googleApiConfig) {
         req.session.googleConfig = project.googleApiConfig;
         console.log(`✅ Inherited Google API configuration from project "${project.name}" for user ${invitation.email}`);
+      }
+      
+      // Update the project member record to link the authenticated user
+      // The member was already added during invitation creation with email as userId
+      // Now we need to ensure the member record is properly linked
+      try {
+        const existingMember = await storage.getUserProjectRole(invitation.projectId, invitation.email);
+        if (!existingMember) {
+          // If no member record exists, create one
+          await storage.addProjectMember({
+            projectId: invitation.projectId,
+            userId: invitation.email,
+            role: invitation.role as "owner" | "admin" | "member",
+          });
+          console.log(`✅ Added project member record for ${invitation.email} in project "${project.name}"`);
+        } else {
+          console.log(`✅ Project member record already exists for ${invitation.email} in project "${project.name}"`);
+        }
+      } catch (error) {
+        console.error('Error ensuring project member record:', error);
       }
       
       // Mark invitation as accepted

@@ -40,6 +40,7 @@ import { format } from "date-fns";
 import { Link } from "wouter";
 import type { Project, Task } from "@shared/schema";
 import { RichCommentEditor } from "@/components/ui/rich-comment-editor";
+import { TeamMembers } from "@/components/ui/team-members";
 
 interface TaskForm {
   title: string;
@@ -657,6 +658,14 @@ export default function ProjectPage() {
             <Flag className="h-4 w-4 mr-2" />
             Sprints
           </Button>
+        </div>
+
+        {/* Team Members Section */}
+        <div className="mb-6">
+          <TeamMembers 
+            projectId={projectId!} 
+            onAddMember={() => setIsInviteMemberOpen(true)}
+          />
         </div>
 
         {/* Main Content Area */}
