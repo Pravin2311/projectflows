@@ -20,7 +20,7 @@ interface User {
   id: string;
   firstName?: string;
   lastName?: string;
-  email: string;
+  email?: string;
 }
 
 interface Task {
@@ -205,7 +205,7 @@ export function RichCommentEditor({
   const filteredMembers = projectMembers.filter(member =>
     !mentionQuery || 
     `${member.firstName} ${member.lastName}`.toLowerCase().includes(mentionQuery.toLowerCase()) ||
-    member.email.toLowerCase().includes(mentionQuery.toLowerCase())
+    (member.email && member.email.toLowerCase().includes(mentionQuery.toLowerCase()))
   );
 
   const filteredTasks = projectTasks.filter(task =>
@@ -292,13 +292,13 @@ export function RichCommentEditor({
                   className="w-full p-2 text-left hover:bg-gray-50 flex items-center gap-2"
                 >
                   <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm">
-                    {member.firstName?.[0] || member.email[0]}
+                    {member.firstName?.[0] || member.email?.[0] || 'U'}
                   </div>
                   <div>
                     <div className="text-sm font-medium">
                       {member.firstName} {member.lastName}
                     </div>
-                    <div className="text-xs text-gray-500">{member.email}</div>
+                    <div className="text-xs text-gray-500">{member.email || 'No email'}</div>
                   </div>
                 </button>
               ))}
