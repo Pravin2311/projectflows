@@ -17,6 +17,8 @@ import { GoogleEmailService } from "./emailService";
 import { GooglePeopleService } from "./services/googlePeopleService";
 import { GoogleTasksService } from "./services/googleTasksService";
 import { GoogleCalendarService } from "./services/googleCalendarService";
+import { GoogleDocsService } from "./services/googleDocsService";
+import { GoogleSheetsService } from "./services/googleSheetsService";
 
 import session from 'express-session';
 
@@ -1482,6 +1484,222 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching deadlines:', error);
       res.status(500).json({ error: 'Failed to fetch deadlines' });
+    }
+  });
+
+  // Google Docs API routes
+  app.get('/api/google/docs', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      const { q: query } = req.query;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      const docsService = new GoogleDocsService(googleConfig, accessToken);
+      const documents = await docsService.getDocuments(query);
+      
+      res.json(documents);
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+      res.status(500).json({ error: 'Failed to fetch documents' });
+    }
+  });
+
+  app.post('/api/google/docs', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      const { title, content } = req.body;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      if (!title) {
+        return res.status(400).json({ error: 'Document title is required' });
+      }
+
+      const docsService = new GoogleDocsService(googleConfig, accessToken);
+      const document = await docsService.createDocument(title, content);
+      
+      if (!document) {
+        return res.status(500).json({ error: 'Failed to create document' });
+      }
+
+      res.json(document);
+    } catch (error) {
+      console.error('Error creating document:', error);
+      res.status(500).json({ error: 'Failed to create document' });
+    }
+  });
+
+  app.get('/api/google/docs/:documentId', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      const { documentId } = req.params;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      const docsService = new GoogleDocsService(googleConfig, accessToken);
+      const content = await docsService.getDocumentContent(documentId);
+      
+      if (!content) {
+        return res.status(404).json({ error: 'Document not found' });
+      }
+
+      res.json(content);
+    } catch (error) {
+      console.error('Error fetching document content:', error);
+      res.status(500).json({ error: 'Failed to fetch document content' });
+    }
+  });
+
+  app.post('/api/projects/:projectId/docs/create', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      const { projectId } = req.params;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const docsService = new GoogleDocsService(googleConfig, accessToken);
+      const document = await docsService.createProjectDocumentation(project.name, project.description);
+      
+      if (!document) {
+        return res.status(500).json({ error: 'Failed to create project documentation' });
+      }
+
+      res.json(document);
+    } catch (error) {
+      console.error('Error creating project documentation:', error);
+      res.status(500).json({ error: 'Failed to create project documentation' });
+    }
+  });
+
+  // Google Sheets API routes
+  app.get('/api/google/sheets', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      const { q: query } = req.query;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      const sheetsService = new GoogleSheetsService(googleConfig, accessToken);
+      const spreadsheets = await sheetsService.getSpreadsheets(query);
+      
+      res.json(spreadsheets);
+    } catch (error) {
+      console.error('Error fetching spreadsheets:', error);
+      res.status(500).json({ error: 'Failed to fetch spreadsheets' });
+    }
+  });
+
+  app.post('/api/google/sheets', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      const { title, type } = req.body;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      if (!title) {
+        return res.status(400).json({ error: 'Spreadsheet title is required' });
+      }
+
+      const sheetsService = new GoogleSheetsService(googleConfig, accessToken);
+      let spreadsheet;
+      
+      if (type === 'project-tracker') {
+        spreadsheet = await sheetsService.createProjectTracker(title);
+      } else {
+        spreadsheet = await sheetsService.createSpreadsheet(title);
+      }
+      
+      if (!spreadsheet) {
+        return res.status(500).json({ error: 'Failed to create spreadsheet' });
+      }
+
+      res.json(spreadsheet);
+    } catch (error) {
+      console.error('Error creating spreadsheet:', error);
+      res.status(500).json({ error: 'Failed to create spreadsheet' });
+    }
+  });
+
+  app.get('/api/google/sheets/:spreadsheetId/:range', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      const { spreadsheetId, range } = req.params;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      const sheetsService = new GoogleSheetsService(googleConfig, accessToken);
+      const data = await sheetsService.getSheetData(spreadsheetId, range);
+      
+      if (!data) {
+        return res.status(404).json({ error: 'Sheet data not found' });
+      }
+
+      res.json(data);
+    } catch (error) {
+      console.error('Error fetching sheet data:', error);
+      res.status(500).json({ error: 'Failed to fetch sheet data' });
+    }
+  });
+
+  app.post('/api/projects/:projectId/sync-to-sheets', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      const { projectId } = req.params;
+      const { spreadsheetId } = req.body;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const tasks = await storage.getProjectTasks(projectId);
+      
+      const sheetsService = new GoogleSheetsService(googleConfig, accessToken);
+      const success = await sheetsService.syncProjectTasks(spreadsheetId, tasks);
+      
+      if (!success) {
+        return res.status(500).json({ error: 'Failed to sync tasks to spreadsheet' });
+      }
+
+      res.json({ 
+        message: `Synced ${tasks.length} tasks to spreadsheet`,
+        syncedTasks: tasks.length
+      });
+    } catch (error) {
+      console.error('Error syncing tasks to sheets:', error);
+      res.status(500).json({ error: 'Failed to sync tasks to spreadsheet' });
     }
   });
 

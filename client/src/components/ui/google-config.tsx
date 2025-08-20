@@ -4,16 +4,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, ExternalLink, Key, Cloud, Shield } from "lucide-react";
-import { googleApiConfigSchema } from "@shared/schema";
+import { Loader2, ExternalLink, Key, Cloud, Shield, ArrowRight } from "lucide-react";
+import { minimalGoogleConfigSchema, type GoogleApiConfig } from "@shared/schema";
 import { z } from "zod";
+import { ProgressiveGoogleSetup } from "@/components/ui/progressive-google-setup";
 
 interface GoogleConfigProps {
-  onConfigSubmit: (config: { apiKey: string; clientId: string; clientSecret: string; geminiApiKey: string }) => void;
+  onConfigSubmit: (config: GoogleApiConfig) => void;
+  isLoading?: boolean;
+  showProgressiveSetup?: boolean;
+}
+
+export function GoogleConfig({ onConfigSubmit, isLoading = false, showProgressiveSetup = true }: GoogleConfigProps) {
+  const [useProgressiveSetup, setUseProgressiveSetup] = useState(showProgressiveSetup);
+
+  if (useProgressiveSetup) {
+    return <ProgressiveGoogleSetup onConfigSubmit={onConfigSubmit} isLoading={isLoading} />;
+  }
+
+  return <LegacyGoogleConfig onConfigSubmit={onConfigSubmit} isLoading={isLoading} />;
+}
+
+interface LegacyGoogleConfigProps {
+  onConfigSubmit: (config: GoogleApiConfig) => void;
   isLoading?: boolean;
 }
 
-export function GoogleConfig({ onConfigSubmit, isLoading = false }: GoogleConfigProps) {
+function LegacyGoogleConfig({ onConfigSubmit, isLoading = false }: LegacyGoogleConfigProps) {
   const [formData, setFormData] = useState({
     apiKey: "",
     clientId: "",
@@ -27,8 +44,23 @@ export function GoogleConfig({ onConfigSubmit, isLoading = false }: GoogleConfig
     setErrors({});
 
     try {
-      const validatedData = googleApiConfigSchema.parse(formData);
-      onConfigSubmit(validatedData);
+      const validatedData = minimalGoogleConfigSchema.parse(formData);
+      
+      // Create full config with default APIs enabled
+      const fullConfig: GoogleApiConfig = {
+        ...validatedData,
+        enabledApis: {
+          drive: true,
+          gmail: false,
+          contacts: false,
+          tasks: false,
+          calendar: false,
+          docs: false,
+          sheets: false,
+        }
+      };
+      
+      onConfigSubmit(fullConfig);
     } catch (error) {
       if (error instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};

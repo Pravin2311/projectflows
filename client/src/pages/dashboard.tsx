@@ -149,6 +149,12 @@ export default function Dashboard() {
                 </span>
               </div>
               
+              <Link href="/google-apps">
+                <Button variant="ghost" size="sm" title="Google Workspace">
+                  <Cloud className="h-4 w-4" />
+                </Button>
+              </Link>
+              
               <Button variant="ghost" size="sm">
                 <Settings className="h-4 w-4" />
               </Button>

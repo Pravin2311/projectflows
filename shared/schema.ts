@@ -1,13 +1,40 @@
 import { z } from "zod";
 
-// Google API Configuration
+// Google API Configuration - Minimal initial setup
 export const googleApiConfigSchema = z.object({
   apiKey: z.string().min(1, "Google API key is required"),
   clientId: z.string().min(1, "Google Client ID is required"),
   clientSecret: z.string().min(1, "Google Client Secret is required"),
   geminiApiKey: z.string().min(1, "Google AI (Gemini) API key is required"),
+  // Optional APIs that can be enabled later
+  enabledApis: z.object({
+    drive: z.boolean().default(true), // Always enabled for core functionality
+    gmail: z.boolean().default(false),
+    contacts: z.boolean().default(false),
+    tasks: z.boolean().default(false),
+    calendar: z.boolean().default(false),
+    docs: z.boolean().default(false),
+    sheets: z.boolean().default(false),
+  }).default({
+    drive: true,
+    gmail: false,
+    contacts: false,
+    tasks: false,
+    calendar: false,
+    docs: false,
+    sheets: false,
+  }),
 });
 export type GoogleApiConfig = z.infer<typeof googleApiConfigSchema>;
+
+// Minimal setup schema for initial configuration
+export const minimalGoogleConfigSchema = z.object({
+  apiKey: z.string().min(1, "Google API key is required"),
+  clientId: z.string().min(1, "Google Client ID is required"),
+  clientSecret: z.string().min(1, "Google Client Secret is required"),
+  geminiApiKey: z.string().min(1, "Google AI (Gemini) API key is required"),
+});
+export type MinimalGoogleConfig = z.infer<typeof minimalGoogleConfigSchema>;
 
 // User types for Google Auth
 export const userSchema = z.object({
