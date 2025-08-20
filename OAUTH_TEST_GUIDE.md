@@ -1,22 +1,29 @@
-# OAuth Testing Guide - Before Production Deployment
+# OAuth Setup - Critical Redirect URI Fix
 
-## Current Status: ✅ Ready for Testing
+## URGENT: Add This Exact Redirect URI
 
-The Gmail OAuth implementation is now properly configured and ready for testing.
+**You must add this exact URL to Google Cloud Console:**
 
-## Required Setup for Testing
+```
+https://your-replit-url.replit.dev/platform-oauth-callback
+```
 
-### 1. Get Your Current Domain
-Your Replit app is running on: Check the browser URL bar
+**Replace `your-replit-url` with your actual Replit URL from the browser address bar.**
 
-### 2. Update Google Cloud Console
-1. Go to Google Cloud Console → APIs & Services → Credentials
-2. Edit your OAuth 2.0 Client ID  
-3. In "Authorized redirect URIs", add exactly:
+## Steps to Fix Right Now:
+
+### 1. Get Your Replit URL
+- Look at your browser address bar
+- Copy the domain part (e.g., `https://abc123.replit.dev`)
+
+### 2. Add to Google Cloud Console
+1. **Go to Google Cloud Console** → APIs & Services → Credentials
+2. **Edit your OAuth 2.0 Client ID**
+3. **In "Authorized redirect URIs"**, add your domain + `/platform-oauth-callback`:
    ```
-   postmessage
+   https://YOUR-ACTUAL-REPL-URL.replit.dev/platform-oauth-callback
    ```
-   This special URI works on ALL domains automatically
+4. **Save the changes**
 
 ### 3. Test the Flow
 1. Go to your project page
@@ -36,9 +43,15 @@ Your Replit app is running on: Check the browser URL bar
 - Email invitations will now send real Gmail emails
 
 ### ❌ Common Issues:
-- **"Authorization Error: redirect_uri_mismatch"** = Add `postmessage` to Google Cloud Console redirect URIs
+- **"Authorization Error: redirect_uri_mismatch"** = Add your domain's `/platform-oauth-callback` to Google Cloud Console
 - **Popup blocked** = Enable popups for your domain  
 - **"OAuth failed"** = Check Google Cloud Console credentials
+
+### 🔧 Quick Fix for redirect_uri_mismatch:
+1. Copy your Replit URL from browser address bar
+2. Add `/platform-oauth-callback` to the end  
+3. Add this complete URL to Google Cloud Console redirect URIs
+4. Save and try again
 
 ## Production Deployment Notes
 
