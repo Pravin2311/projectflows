@@ -19,8 +19,11 @@ This new implementation uses **popup-based OAuth** that works on any domain with
 
 1. **Go to Google Cloud Console** → APIs & Services → Credentials
 2. **Create OAuth 2.0 Client ID** with these settings:
-   - Application type: **Web application**
-   - Authorized redirect URIs: Add `postmessage` (this special URI handles popup OAuth)
+   - Application type: **Web application**  
+   - Authorized redirect URIs: Add your domain + `/oauth-handler.html`
+     - For Replit: `https://your-repl-url.replit.dev/oauth-handler.html`
+     - For localhost: `http://localhost:5000/oauth-handler.html`
+     - For production: `https://yourdomain.com/oauth-handler.html`
 3. **Enable APIs**: Gmail API, Google Drive API
 4. **Get credentials**: Client ID, Client Secret, API Key
 

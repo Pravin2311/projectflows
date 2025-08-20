@@ -26,15 +26,16 @@ export class SimpleGoogleAuth {
     }
 
     return new Promise((resolve, reject) => {
-      // Create OAuth URL directly
+      // Create OAuth URL with proper redirect URI
+      const redirectUri = `${window.location.origin}/oauth-handler.html`;
       const params = new URLSearchParams({
         client_id: this.clientId,
-        redirect_uri: 'postmessage', // Uses postmessage for popup flow
+        redirect_uri: redirectUri,
         scope: this.scopes.join(' '),
         response_type: 'code',
         access_type: 'offline',
         prompt: 'consent',
-        include_granted_scopes: 'false'
+        include_granted_scopes: 'true'
       });
 
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
@@ -54,49 +55,54 @@ export class SimpleGoogleAuth {
 
       // Listen for messages from popup
       const messageListener = async (event: MessageEvent) => {
-        if (event.origin !== 'https://accounts.google.com') {
+        // Accept messages from our own domain (OAuth handler page)
+        if (event.origin !== window.location.origin) {
           return;
         }
 
         console.log('Received message from OAuth popup:', event.data);
 
-        if (event.data.error) {
+        if (event.data && typeof event.data === 'object') {
           window.removeEventListener('message', messageListener);
-          popup.close();
-          reject(new Error(`OAuth failed: ${event.data.error}`));
-          return;
-        }
-
-        if (event.data.code) {
-          window.removeEventListener('message', messageListener);
-          popup.close();
           
-          try {
-            // Exchange code for tokens using our backend
-            const response = await fetch('/api/auth/exchange-oauth-code', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ code: event.data.code }),
-              credentials: 'include'
-            });
+          if (event.data.error) {
+            popup.close();
+            reject(new Error(`OAuth failed: ${event.data.error}`));
+            return;
+          }
 
-            if (!response.ok) {
-              throw new Error(`Token exchange failed: ${response.statusText}`);
-            }
-
-            const tokens = await response.json();
-            console.log('Successfully exchanged code for tokens');
+          if (event.data.code) {
+            popup.close();
             
-            resolve({
-              access_token: tokens.access_token,
-              refresh_token: tokens.refresh_token,
-              scope: tokens.scope,
-              token_type: tokens.token_type || 'Bearer',
-              expires_in: tokens.expires_in
-            });
-          } catch (error: any) {
-            console.error('Token exchange failed:', error);
-            reject(new Error(`Token exchange failed: ${error.message}`));
+            try {
+              // Exchange code for tokens using our backend
+              const response = await fetch('/api/auth/exchange-oauth-code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: event.data.code }),
+                credentials: 'include'
+              });
+
+              if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Token exchange failed: ${errorText}`);
+              }
+
+              const tokens = await response.json();
+              console.log('Successfully exchanged code for tokens');
+              
+              resolve({
+                access_token: tokens.access_token,
+                refresh_token: tokens.refresh_token,
+                scope: tokens.scope,
+                token_type: tokens.token_type || 'Bearer',
+                expires_in: tokens.expires_in
+              });
+            } catch (error: any) {
+              console.error('Token exchange failed:', error);
+              reject(new Error(`Token exchange failed: ${error.message}`));
+            }
+            return;
           }
         }
       };

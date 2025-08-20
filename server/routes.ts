@@ -102,7 +102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           client_secret: clientSecret,
           code: code,
           grant_type: 'authorization_code',
-          redirect_uri: 'postmessage', // Must match the redirect_uri used in authorization
+          redirect_uri: `${req.protocol}://${req.get('host')}/oauth-handler.html`, // Must match the redirect_uri used in authorization
         }),
       });
 
@@ -837,6 +837,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error fetching project stats:", error);
       res.status(500).json({ message: "Failed to fetch project stats" });
     }
+  });
+
+  // Serve OAuth handler page
+  app.get('/oauth-handler.html', (req, res) => {
+    res.send(`<!DOCTYPE html>
+<html>
+<head>
+  <title>OAuth Handler</title>
+</head>
+<body>
+  <script>
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const error = urlParams.get('error');
+      
+      if (window.opener) {
+        if (error) {
+          window.opener.postMessage({ error: error }, '*');
+        } else if (code) {
+          window.opener.postMessage({ code: code }, '*');
+        }
+        window.close();
+      }
+    } catch (e) {
+      console.error('OAuth handler error:', e);
+      if (window.opener) {
+        window.opener.postMessage({ error: 'oauth_handler_error' }, '*');
+        window.close();
+      }
+    }
+  </script>
+</body>
+</html>`);
   });
 
   const httpServer = createServer(app);

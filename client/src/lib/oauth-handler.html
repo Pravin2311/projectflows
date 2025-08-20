@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>OAuth Handler</title>
+</head>
+<body>
+  <script>
+    // This page handles the OAuth callback and posts the result to the parent window
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const error = urlParams.get('error');
+      
+      if (window.opener) {
+        if (error) {
+          window.opener.postMessage({ error: error }, '*');
+        } else if (code) {
+          window.opener.postMessage({ code: code }, '*');
+        }
+        window.close();
+      }
+    } catch (e) {
+      console.error('OAuth handler error:', e);
+      if (window.opener) {
+        window.opener.postMessage({ error: 'oauth_handler_error' }, '*');
+        window.close();
+      }
+    }
+  </script>
+</body>
+</html>
