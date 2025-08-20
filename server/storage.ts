@@ -329,11 +329,12 @@ export class MemStorage implements IStorage {
 
   // Invitation operations
   async createInvitation(invitationData: InsertInvitation): Promise<Invitation> {
-    const id = randomUUID();
+    // Use provided ID if available, otherwise generate one
+    const id = invitationData.id || randomUUID();
     const invitation: Invitation = {
       ...invitationData,
       id,
-      createdAt: new Date().toISOString(),
+      createdAt: invitationData.createdAt || new Date().toISOString(),
     };
     this.invitations.set(id, invitation);
     return invitation;

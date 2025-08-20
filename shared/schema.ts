@@ -157,6 +157,8 @@ export type Invitation = z.infer<typeof invitationSchema>;
 
 export const insertInvitationSchema = invitationSchema.omit({
   id: true,
+}).extend({
+  id: z.string().optional(), // Allow pre-generated ID
 });
 export type InsertInvitation = z.infer<typeof insertInvitationSchema>;
 
