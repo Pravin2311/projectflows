@@ -169,6 +169,22 @@ export function ApiModuleManager() {
         <div className="space-y-3">
           <h3 className="font-medium text-sm text-gray-700 dark:text-gray-300">Core Services (Always Enabled)</h3>
           
+          <div className="flex items-center justify-between p-4 border rounded-lg bg-purple-50 dark:bg-purple-950 border-purple-200 dark:border-purple-800">
+            <div className="flex items-start space-x-3">
+              <div className="text-2xl">🔐</div>
+              <div className="flex-1">
+                <div className="flex items-center space-x-2">
+                  <h4 className="font-semibold text-purple-800 dark:text-purple-200">Google OAuth API</h4>
+                  <Badge variant="secondary" className="bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
+                    Required
+                  </Badge>
+                </div>
+                <p className="text-sm text-purple-700 dark:text-purple-300">User authentication and project access control</p>
+              </div>
+            </div>
+            <CheckCircle className="h-5 w-5 text-purple-600" />
+          </div>
+          
           <div className="flex items-center justify-between p-4 border rounded-lg bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
             <div className="flex items-start space-x-3">
               <div className="text-2xl">💾</div>

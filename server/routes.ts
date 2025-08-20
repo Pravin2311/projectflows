@@ -1942,8 +1942,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Return enabled APIs from session
       const enabledApis = googleConfig.enabledApis || {
-        drive: true, // Always enabled
-        ai: true,    // Always enabled
+        auth: true,  // Always enabled - OAuth/Authentication
+        drive: true, // Always enabled - Data storage
+        ai: true,    // Always enabled - Gemini AI
         docs: false,
         sheets: false,
         gmail: false,
@@ -1970,8 +1971,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Ensure core APIs are always enabled
       const updatedApis = {
         ...enabledApis,
-        drive: true, // Always required
-        ai: true     // Always required for AI features
+        auth: true,  // Always required - OAuth/Authentication
+        drive: true, // Always required - Data storage
+        ai: true     // Always required - AI features
       };
 
       // Update the Google config with new API selections

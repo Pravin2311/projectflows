@@ -93,6 +93,8 @@ This is a completely free project management platform built with React and Expre
 Preferred communication style: Simple, everyday language.
 Business goal: Focus on completely free Google-first architecture where users provide their own Google AI API keys. No premium tiers or subscriptions - keep platform 100% free forever. Users control their own AI costs through Google directly.
 
+**Core APIs (Always Required)**: Google OAuth API (authentication), Google Drive API (data storage), Google Gemini AI API (AI features) - these three APIs form the foundation of the platform and cannot be disabled.
+
 **COMPLETELY FREE FOREVER (August 20, 2025)**: Platform architecture now 100% free with user-provided Google AI API keys. No subscriptions, no premium tiers, no payment processing. Users control their own AI costs directly through Google - platform costs them nothing.
 
 **CRITICAL USER FEEDBACK (August 20, 2025)**: Current OAuth setup is too complicated for end users. Need to simplify to truly zero-configuration approach. Users should never need to touch Google Cloud Console.
