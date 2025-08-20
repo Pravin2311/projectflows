@@ -203,13 +203,20 @@ export default function ProjectPage() {
       const comment = await apiRequest("POST", `/api/tasks/${selectedTask.id}/comments`, {
         content: newComment.trim()
       });
-      setComments([...comments, comment]);
+      
+      console.log("Comment created:", comment);
+      
+      // Reload comments to get the latest data with author info
+      const updatedComments = await apiRequest("GET", `/api/tasks/${selectedTask.id}/comments`);
+      setComments(updatedComments || []);
       setNewComment("");
+      
       toast({
         title: "Comment added",
         description: "Your comment has been added to the task.",
       });
     } catch (error) {
+      console.error("Failed to add comment:", error);
       toast({
         title: "Error",
         description: "Failed to add comment.",

@@ -152,6 +152,7 @@ export class MemStorage implements IStorage {
       ...projectData,
       id,
       driveFileId: `temp-${id}`, // Will be updated with actual Google Drive file ID
+      memberEmails: projectData.allowedEmails || [],
       createdAt: now,
       updatedAt: now,
     };
@@ -307,7 +308,8 @@ export class MemStorage implements IStorage {
 
   async getTaskComments(taskId: string): Promise<(Comment & { author: User })[]> {
     const taskComments = Array.from(this.comments.values())
-      .filter(comment => comment.taskId === taskId);
+      .filter(comment => comment.taskId === taskId)
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
     
     return taskComments.map(comment => ({
       ...comment,
