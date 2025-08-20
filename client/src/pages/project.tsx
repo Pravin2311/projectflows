@@ -124,16 +124,19 @@ export default function ProjectPage() {
     },
     onSuccess: (updatedTask) => {
       console.log("Task update successful:", updatedTask);
-      // Force immediate cache invalidation and refetch
+      // Don't immediately refetch since we already have optimistic update
+      // Just invalidate to ensure next natural refetch gets fresh data
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/tasks`] });
-      queryClient.refetchQueries({ queryKey: [`/api/projects/${projectId}/tasks`] });
       toast({
         title: "Task updated",
         description: "Task status changed successfully.",
       });
     },
-    onError: (error: Error) => {
-      console.error("Task update error:", error);
+    onError: (error: Error, variables) => {
+      console.error("Task update failed, reverting optimistic update:", error);
+      // Revert optimistic update on error
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/tasks`] });
+      queryClient.refetchQueries({ queryKey: [`/api/projects/${projectId}/tasks`] });
       toast({
         title: "Error",
         description: error.message || "Failed to update task.",

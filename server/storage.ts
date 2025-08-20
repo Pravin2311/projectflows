@@ -271,6 +271,7 @@ export class MemStorage implements IStorage {
   }
 
   async updateTask(id: string, updates: Partial<InsertTask>): Promise<Task> {
+    console.log('Storage: Updating task', id, 'with updates:', updates);
     const existing = this.tasks.get(id);
     if (!existing) throw new Error("Task not found");
     
@@ -280,6 +281,7 @@ export class MemStorage implements IStorage {
       updatedAt: new Date().toISOString(),
     };
     this.tasks.set(id, updated);
+    console.log('Storage: Task updated successfully. New task state:', updated);
     return updated;
   }
 
