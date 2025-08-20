@@ -1,58 +1,57 @@
-# End User Setup - Zero Configuration Required
+# End User Setup - What Users Should Experience
 
-## For End Users: No Google Cloud Console Setup Needed!
+## Current Reality (Too Complex)
+❌ Users need to:
+1. Configure Google Cloud Console
+2. Add redirect URIs
+3. Set up OAuth consent screen  
+4. Add themselves as test users
+5. Enable Gmail API
+6. Wait for propagation
 
-Your project management platform is designed to be **completely free** and **zero-configuration** for end users.
+**This is completely unacceptable for a "zero-configuration" platform.**
 
-### What This Means for You:
-- **No Google Cloud Console Setup**: You don't need to create any Google accounts or configure OAuth
-- **No API Keys Required**: The platform handles all Google integrations automatically  
-- **Free Forever**: Use your own Google Drive for storage, completely free
-- **Real Gmail Sending**: Send actual email invitations without any setup
+## Target User Experience (What We Need)
+✅ Users should only need to:
+1. Click "Connect Gmail (1-Click)"
+2. Grant permissions in Google popup
+3. Done - email invitations work immediately
 
-### How It Works:
-1. **Platform-Managed OAuth**: The platform owner has configured Google OAuth once for all users
-2. **Your Google Account**: You just sign in with your existing Google account
-3. **Automatic Permissions**: Grant access to Drive and Gmail when prompted
-4. **Instant Email Sending**: Start sending real Gmail invitations immediately
+## What Platform Owner Must Do Once
+To achieve true zero-configuration, the platform owner needs to:
 
-### Getting Started:
-1. Sign up/login to the platform
-2. Click "Enable Email Invites" when creating projects
-3. Grant Google permissions in the popup (one-time)
-4. Start collaborating with real email invitations!
+### 1. Enable All Google APIs (One-Time Setup)
+- Gmail API: https://console.developers.google.com/apis/api/gmail.googleapis.com/overview?project=656494945970
+- Google Drive API
+- Google Sheets API
+- People API
 
-### What You Get:
-- ✅ **Project Management**: Full kanban boards, task tracking, team collaboration
-- ✅ **Google Drive Storage**: All your project data stored in your own Google Drive
-- ✅ **Real Email Invitations**: Send Gmail invitations to any email address
-- ✅ **AI-Powered Insights**: Optional premium features for $19/month
-- ✅ **Complete Data Ownership**: Your data stays in your Google Drive forever
+### 2. Publish OAuth Consent Screen (One-Time Setup)
+- Change from "Testing" to "In production"
+- Add universal redirect URI patterns
+- Remove test user restrictions
 
-### No Technical Skills Required
-The platform is designed for business users, not developers. Everything "just works" without any technical configuration.
+### 3. Add Universal Redirect URIs (One-Time Setup)
+```
+https://*.replit.dev/platform-oauth-callback
+https://localhost:*/platform-oauth-callback  
+https://yourdomain.com/platform-oauth-callback
+```
 
----
+## Success Criteria for End Users
+- ✅ One button click: "Connect Gmail"
+- ✅ Google OAuth popup appears immediately
+- ✅ User grants permissions
+- ✅ Email invitations work instantly
+- ✅ Zero technical configuration required
+- ✅ No Google Cloud Console interaction needed
 
-## For Platform Owners: One-Time Google Cloud Setup
+## Business Impact
+This achieves the core platform promise:
+- **Completely free** ✅
+- **Zero configuration** ✅  
+- **Google-first architecture** ✅
+- **User owns data** ✅
+- **Simple user experience** ✅
 
-If you're deploying this platform for others, you need to configure Google OAuth once:
-
-### Steps:
-1. **Create Google Cloud Project**
-2. **Enable APIs**: Gmail API, Google Drive API  
-3. **Create OAuth 2.0 Credentials**:
-   - Application type: Web application
-   - Authorized redirect URIs: Add your domain + `/platform-oauth-callback`
-   - Example: `https://your-platform.com/platform-oauth-callback`
-4. **Set Environment Variables**:
-   ```
-   PLATFORM_GOOGLE_CLIENT_ID=your-client-id.googleusercontent.com
-   PLATFORM_GOOGLE_CLIENT_SECRET=your-client-secret
-   ```
-
-### Domain Updates:
-When deploying to new domains, just add the new callback URL:
-- `https://new-domain.com/platform-oauth-callback`
-
-That's it! All your users can now use the platform without any Google Cloud Console setup.
+The platform owner handles all technical complexity once, and every end user gets a seamless experience.

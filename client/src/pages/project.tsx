@@ -443,7 +443,7 @@ export default function ProjectPage() {
                   data-testid="button-reauth-gmail"
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  Enable Email Invites
+                  Connect Gmail (1-Click)
                 </Button>
               )}
               

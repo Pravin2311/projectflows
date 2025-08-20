@@ -6,14 +6,13 @@ This is a completely free project management platform built with React and Expre
 
 ## Recent Changes (August 20, 2025)
 
-### Platform-Managed OAuth Implementation (August 20, 2025) ✅ WORKING
-- **Zero End-User Configuration**: End users no longer need to configure Google Cloud Console OAuth settings
-- **Platform-Managed Credentials**: Platform owner configures OAuth once for all users with environment variables
-- **Universal Domain Support**: Works on localhost, Replit, production, and custom domains automatically
-- **OAuth Flow Resolved**: Successfully fixed redirect_uri_mismatch and access_denied errors through Google Cloud Console setup
-- **Complete Authentication**: OAuth Consent Screen configured with test users and all required scopes
-- **Gmail Integration**: OAuth working, Gmail API needs enabling for full email invitation functionality
-- **Production-Ready**: Environment variables PLATFORM_GOOGLE_CLIENT_ID and PLATFORM_GOOGLE_CLIENT_SECRET configured
+### Platform-Managed OAuth Implementation Status (August 20, 2025)
+- **Technical Implementation**: ✅ OAuth flow working, tokens received, authentication complete
+- **Current User Experience**: ❌ Too complex - requires Google Cloud Console configuration
+- **User Feedback**: "looks complicated process for first time end user" - requires simplification
+- **Root Issue**: OAuth app in "Testing" mode requires manual test user setup
+- **Required Fix**: Platform owner must publish OAuth app to production and pre-enable all APIs
+- **Target Goal**: True 1-click Gmail connection with zero technical configuration for end users
 
 ### Gmail API Email Invitations
 - **Real Email Sending**: Complete Google Gmail API integration for sending actual email invitations
@@ -58,6 +57,8 @@ This is a completely free project management platform built with React and Expre
 
 Preferred communication style: Simple, everyday language.
 Business goal: Focus on completely free Google-first architecture with optional premium features. Avoid complexity that undermines the core free value proposition.
+
+**CRITICAL USER FEEDBACK (August 20, 2025)**: Current OAuth setup is too complicated for end users. Need to simplify to truly zero-configuration approach. Users should never need to touch Google Cloud Console.
 
 ## System Architecture
 
