@@ -122,15 +122,18 @@ export default function ProjectPage() {
       const response = await apiRequest("PATCH", `/api/tasks/${taskId}`, updates);
       return response;
     },
-    onSuccess: () => {
-      console.log("Task update successful, invalidating cache...");
+    onSuccess: (updatedTask) => {
+      console.log("Task update successful:", updatedTask);
+      // Force immediate cache invalidation and refetch
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/tasks`] });
+      queryClient.refetchQueries({ queryKey: [`/api/projects/${projectId}/tasks`] });
       toast({
         title: "Task updated",
         description: "Task status changed successfully.",
       });
     },
     onError: (error: Error) => {
+      console.error("Task update error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to update task.",
@@ -151,8 +154,17 @@ export default function ProjectPage() {
     createTaskMutation.mutate(taskForm);
   };
 
-  const handleUpdateTaskStatus = (taskId: string, status: "todo" | "in_progress" | "done") => {
+  const handleUpdateTaskStatus = async (taskId: string, status: "todo" | "in_progress" | "done") => {
     console.log("Status update clicked:", taskId, "->", status);
+    
+    // Optimistically update the UI first
+    const currentTasks = queryClient.getQueryData<Task[]>([`/api/projects/${projectId}/tasks`]) || [];
+    const updatedTasks = currentTasks.map(task => 
+      task.id === taskId ? { ...task, status } : task
+    );
+    queryClient.setQueryData([`/api/projects/${projectId}/tasks`], updatedTasks);
+    
+    // Then update the server
     updateTaskMutation.mutate({ taskId, updates: { status } });
   };
 
