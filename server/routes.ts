@@ -100,7 +100,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('Creating Gmail reauth URL with scopes:', scopes);
       
-      const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/callback`;
+      // Use the exact domain from the request, ensuring it matches Google OAuth config
+      const host = req.get('host');
+      const redirectUri = `https://${host}/api/auth/callback`;
+      console.log('Using redirect URI:', redirectUri);
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=${encodeURIComponent(clientId)}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
