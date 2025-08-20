@@ -29,6 +29,7 @@ import { format } from "date-fns";
 import { Link } from "wouter";
 import type { Project } from "@shared/schema";
 import { ApiModuleManager } from "@/components/ui/api-module-manager";
+import { UserSettings } from "@/components/ui/user-settings";
 
 interface DashboardStats {
   totalProjects: number;
@@ -50,6 +51,7 @@ export default function Dashboard() {
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "completed">("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isApiSettingsOpen, setIsApiSettingsOpen] = useState(false);
+  const [isUserSettingsOpen, setIsUserSettingsOpen] = useState(false);
   const [createForm, setCreateForm] = useState<CreateProjectForm>({
     name: "",
     description: ""
@@ -162,7 +164,12 @@ export default function Dashboard() {
                 API Modules
               </Button>
               
-              <Button variant="ghost" size="sm">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setIsUserSettingsOpen(true)}
+                data-testid="button-user-settings"
+              >
                 <Settings className="h-4 w-4" />
               </Button>
               
@@ -435,6 +442,18 @@ export default function Dashboard() {
           </DialogHeader>
           <div className="py-4">
             <ApiModuleManager />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* User Settings Dialog */}
+      <Dialog open={isUserSettingsOpen} onOpenChange={setIsUserSettingsOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" data-testid="dialog-user-settings">
+          <div className="py-4">
+            <UserSettings onSave={(settings) => {
+              console.log('User settings saved:', settings);
+              setIsUserSettingsOpen(false);
+            }} />
           </div>
         </DialogContent>
       </Dialog>

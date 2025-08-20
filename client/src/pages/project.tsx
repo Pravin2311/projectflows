@@ -41,6 +41,7 @@ import { Link } from "wouter";
 import type { Project, Task } from "@shared/schema";
 import { RichCommentEditor } from "@/components/ui/rich-comment-editor";
 import { TeamMembers } from "@/components/ui/team-members";
+import { ProjectSettings } from "@/components/ui/project-settings";
 
 interface TaskForm {
   title: string;
@@ -96,6 +97,7 @@ export default function ProjectPage() {
   }
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const [isInviteMemberOpen, setIsInviteMemberOpen] = useState(false);
+  const [isProjectSettingsOpen, setIsProjectSettingsOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<"member" | "admin">("member");
   const [taskForm, setTaskForm] = useState<TaskForm>({
@@ -469,6 +471,17 @@ export default function ProjectPage() {
                   AI Insights
                 </Button>
               </Link>
+
+              {/* Project Settings Button */}
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setIsProjectSettingsOpen(true)}
+                data-testid="button-project-settings"
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+              </Button>
 
               {/* Invite Team Member Button */}
               <Dialog open={isInviteMemberOpen} onOpenChange={setIsInviteMemberOpen}>
@@ -1205,6 +1218,29 @@ export default function ProjectPage() {
           )}
         </DialogContent>
       </Dialog>
+      {/* Project Settings Dialog */}
+      {project && (
+        <Dialog open={isProjectSettingsOpen} onOpenChange={setIsProjectSettingsOpen}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" data-testid="dialog-project-settings">
+            <div className="py-4">
+              <ProjectSettings 
+                project={project}
+                onSave={(settings) => {
+                  console.log('Project settings saved:', settings);
+                  setIsProjectSettingsOpen(false);
+                }}
+                onDelete={() => {
+                  setIsProjectSettingsOpen(false);
+                  // Redirect to dashboard after deletion
+                  setTimeout(() => {
+                    window.location.href = '/dashboard';
+                  }, 1000);
+                }}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
