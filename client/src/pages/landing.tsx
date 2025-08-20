@@ -86,7 +86,18 @@ export default function Landing() {
         // Successful login - redirect to dashboard
         window.location.href = '/dashboard';
       } else {
-        alert(data.error || 'Login failed. Please check your email address or contact your project owner.');
+        // Show detailed error message with suggestions
+        let errorDisplay = data.message || data.error || 'Login failed. Please try again.';
+        
+        if (data.helpText) {
+          errorDisplay += `\n\n${data.helpText}`;
+        }
+        
+        if (data.suggestions && data.suggestions.length > 0) {
+          errorDisplay += '\n\nSuggestions:\n' + data.suggestions.map((s: string) => `• ${s}`).join('\n');
+        }
+        
+        alert(errorDisplay);
       }
     } catch (error) {
       console.error('Member login error:', error);

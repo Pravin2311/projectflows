@@ -6,6 +6,7 @@ export const googleApiConfigSchema = z.object({
   clientId: z.string().min(1, "Google Client ID is required"),
   clientSecret: z.string().min(1, "Google Client Secret is required"),
   geminiApiKey: z.string().min(1, "Google AI (Gemini) API key is required"),
+  email: z.string().email("Valid email address is required").optional(),
   // Optional APIs that can be enabled later
   enabledApis: z.object({
     drive: z.boolean().default(true), // Always enabled for core functionality

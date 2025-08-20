@@ -393,9 +393,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if this email has pending invitations or project access
       const projectsForEmail = await storage.getProjectsForEmail(email);
       
-      if (projectsForEmail.length === 0) {
+      // Also check for pending invitations that haven't been converted to memberships yet
+      const memStorage = storage as any;
+      const pendingInvitations = Array.from(memStorage.invitations?.values() || [])
+        .filter((inv: any) => inv.email === email && inv.status === 'pending');
+      
+      if (projectsForEmail.length === 0 && pendingInvitations.length === 0) {
         return res.status(403).json({ 
-          error: 'No project access found for this email address. Please check with your project owner for an invitation.' 
+          error: 'Access Denied',
+          message: `No project invitations found for ${email}`,
+          helpText: 'Ask your project owner to send you an invitation first. They can invite you by entering your email address in their project settings.',
+          suggestions: [
+            'Double-check your email address for typos',
+            'Contact your project owner to confirm they sent an invitation',
+            'Check if you might have been invited with a different email address'
+          ],
+          errorType: 'no_invitation'
+        });
+      }
+      
+      // If user has pending invitations but no project memberships yet
+      if (projectsForEmail.length === 0 && pendingInvitations.length > 0) {
+        return res.status(403).json({ 
+          error: 'Invitation Pending',
+          message: `You have pending invitations for ${pendingInvitations.length} project(s), but the project owner hasn't set up their Google API configuration yet.`,
+          helpText: 'Please ask your project owner to complete their Google API setup first. Once they do, you\'ll automatically gain access.',
+          suggestions: [
+            'Contact your project owner about completing their setup',
+            'Try again later after they\'ve configured their Google APIs'
+          ],
+          errorType: 'owner_setup_required'
         });
       }
       
@@ -436,11 +463,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Auto-accept all pending invitations
-      const memStorage = storage as any;
-      const pendingInvitations = Array.from(memStorage.invitations.values())
+      const pendingInvitesToAccept = Array.from((storage as any).invitations.values())
         .filter((inv: any) => inv.email === email && inv.status === 'pending');
       
-      for (const invitation of pendingInvitations) {
+      for (const invitation of pendingInvitesToAccept) {
         (invitation as any).status = 'accepted';
         console.log(`✅ Auto-accepted invitation for project: ${(invitation as any).projectId}`);
       }
