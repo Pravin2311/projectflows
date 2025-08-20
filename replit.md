@@ -10,8 +10,9 @@ This is a completely free project management platform built with React and Expre
 - **Technical Implementation**: ✅ OAuth flow working, tokens received, authentication complete
 - **Current User Experience**: ❌ Too complex - requires Google Cloud Console configuration
 - **User Feedback**: "looks complicated process for first time end user" - requires simplification
-- **Root Issue**: OAuth app in "Testing" mode requires manual test user setup
-- **Required Fix**: Platform owner must publish OAuth app to production and pre-enable all APIs
+- **Root Issue**: OAuth app stuck in "Testing" mode due to mixed HTTP/HTTPS redirect URIs - Google requires HTTPS-only for production
+- **Required Fix**: Create HTTPS-only OAuth app with production redirect URIs, then publish to production
+- **Technical Blocker**: Mixed protocol URIs (http://localhost + https://replit.dev) prevent production publishing
 - **Target Goal**: True 1-click Gmail connection with zero technical configuration for end users
 
 ### Gmail API Email Invitations
@@ -59,6 +60,8 @@ Preferred communication style: Simple, everyday language.
 Business goal: Focus on completely free Google-first architecture with optional premium features. Avoid complexity that undermines the core free value proposition.
 
 **CRITICAL USER FEEDBACK (August 20, 2025)**: Current OAuth setup is too complicated for end users. Need to simplify to truly zero-configuration approach. Users should never need to touch Google Cloud Console.
+
+**SOLUTION IDENTIFIED**: Google requires HTTPS-only redirect URIs for production OAuth apps. Mixed HTTP/HTTPS URIs prevent publishing to production. Solution: Deploy with Replit custom domain (automatic HTTPS) + create HTTPS-only production OAuth app.
 
 ## System Architecture
 

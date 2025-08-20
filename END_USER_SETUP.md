@@ -31,12 +31,19 @@ To achieve true zero-configuration, the platform owner needs to:
 - Add universal redirect URI patterns
 - Remove test user restrictions
 
-### 3. Add Universal Redirect URIs (One-Time Setup)
+### 3. Create HTTPS-Only Production OAuth App (One-Time Setup)
+**Problem**: Google requires HTTPS-only redirect URIs for production OAuth apps
+
+**Solution**: Create separate production OAuth app with only HTTPS URIs:
 ```
+Production OAuth Redirect URIs (HTTPS-only):
 https://*.replit.dev/platform-oauth-callback
-https://localhost:*/platform-oauth-callback  
 https://yourdomain.com/platform-oauth-callback
+https://projectflow.app/platform-oauth-callback
 ```
+
+**Development**: Keep existing OAuth app for local HTTP development
+**Production**: Use new HTTPS-only OAuth app (can be published)
 
 ## Success Criteria for End Users
 - ✅ One button click: "Connect Gmail"
