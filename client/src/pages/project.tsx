@@ -41,12 +41,12 @@ interface TaskForm {
   description: string;
   status: "todo" | "in_progress" | "done";
   priority: "low" | "medium" | "high" | "critical";
-  assignee?: string;
+  assignee: string;
   startDate?: string;
-  dueDate?: string;
-  estimatedHours?: number;
+  dueDate: string;
+  estimatedHours: number;
   tags: string[];
-  sprintId?: string;
+  sprintId: string;
 }
 
 const statusConfig = {
@@ -161,7 +161,16 @@ export default function ProjectPage() {
       });
       return;
     }
-    createTaskMutation.mutate(taskForm);
+    
+    // Prepare task data with proper formatting
+    const taskData = {
+      ...taskForm,
+      dueDate: taskForm.dueDate || undefined, // Send undefined instead of empty string
+      startDate: taskForm.startDate || undefined,
+      assigneeId: taskForm.assignee || undefined,
+    };
+    
+    createTaskMutation.mutate(taskData);
   };
 
   const handleUpdateTaskStatus = async (taskId: string, status: "todo" | "in_progress" | "done") => {
@@ -786,10 +795,10 @@ export default function ProjectPage() {
                   <div className="border rounded-lg p-3">
                     <div className="flex items-start space-x-3">
                       <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm">
-                        {user?.firstName?.[0] || 'U'}
+                        {(user as any)?.firstName?.[0] || 'U'}
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
+                        <p className="text-sm font-medium">{(user as any)?.firstName} {(user as any)?.lastName}</p>
                         <p className="text-xs text-gray-500">Task created</p>
                       </div>
                     </div>
