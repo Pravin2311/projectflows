@@ -61,7 +61,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: 'dev@example.com',
         firstName: 'Development',
         lastName: 'User',
-        profileImageUrl: null,
+        profileImageUrl: undefined,
         subscriptionTier: 'free' as const
       };
 

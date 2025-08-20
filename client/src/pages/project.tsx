@@ -72,6 +72,9 @@ export default function ProjectPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
+  const [isInviteMemberOpen, setIsInviteMemberOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<"member" | "admin">("member");
   const [taskForm, setTaskForm] = useState<TaskForm>({
     title: "",
     description: "",
@@ -205,6 +208,44 @@ export default function ProjectPage() {
     updateTaskMutation.mutate({ taskId, updates: { progress } });
   };
 
+  // Invite member mutation
+  const inviteMemberMutation = useMutation({
+    mutationFn: async ({ email, role }: { email: string; role: "member" | "admin" }) => {
+      return await apiRequest("POST", `/api/projects/${projectId}/members`, { email, role });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}`] });
+      setIsInviteMemberOpen(false);
+      setInviteEmail("");
+      setInviteRole("member");
+      toast({
+        title: "Invitation sent",
+        description: "Team member has been invited to the project.",
+      });
+    },
+    onError: (error: Error) => {
+      console.error("Failed to invite member:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to invite team member.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleInviteMember = () => {
+    if (!inviteEmail.trim()) {
+      toast({
+        title: "Error",
+        description: "Email address is required.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    inviteMemberMutation.mutate({ email: inviteEmail.trim(), role: inviteRole });
+  };
+
   const handleTaskClick = (task: Task) => {
     setSelectedTask(task);
     setIsTaskDetailOpen(true);
@@ -312,6 +353,63 @@ export default function ProjectPage() {
             </div>
             
             <div className="flex items-center space-x-2">
+              {/* Invite Team Member Button */}
+              <Dialog open={isInviteMemberOpen} onOpenChange={setIsInviteMemberOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" data-testid="button-invite-member">
+                    <Users className="h-4 w-4 mr-2" />
+                    Invite Team
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Invite Team Member</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="invite-email">Email Address</Label>
+                      <Input
+                        id="invite-email"
+                        data-testid="input-invite-email"
+                        type="email"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                        placeholder="colleague@company.com"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="invite-role">Role</Label>
+                      <select
+                        id="invite-role"
+                        data-testid="select-invite-role"
+                        value={inviteRole}
+                        onChange={(e) => setInviteRole(e.target.value as "member" | "admin")}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white dark:bg-gray-800 dark:border-gray-600"
+                      >
+                        <option value="member">Member - Can view and edit tasks</option>
+                        <option value="admin">Admin - Full project access</option>
+                      </select>
+                    </div>
+                    <div className="flex justify-end space-x-2 pt-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsInviteMemberOpen(false)}
+                        data-testid="button-cancel-invite"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleInviteMember}
+                        disabled={inviteMemberMutation.isPending}
+                        data-testid="button-send-invite"
+                      >
+                        {inviteMemberMutation.isPending ? "Sending..." : "Send Invite"}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
               <Dialog open={isCreateTaskOpen} onOpenChange={setIsCreateTaskOpen}>
                 <DialogTrigger asChild>
                   <Button data-testid="button-add-task" className="bg-blue-600 hover:bg-blue-700">
