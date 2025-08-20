@@ -22,11 +22,13 @@ import {
   FolderOpen,
   Cloud,
   Settings,
-  LogOut
+  LogOut,
+  Sliders
 } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "wouter";
 import type { Project } from "@shared/schema";
+import { ApiModuleManager } from "@/components/ui/api-module-manager";
 
 interface DashboardStats {
   totalProjects: number;
@@ -47,6 +49,7 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "completed">("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isApiSettingsOpen, setIsApiSettingsOpen] = useState(false);
   const [createForm, setCreateForm] = useState<CreateProjectForm>({
     name: "",
     description: ""
@@ -149,12 +152,15 @@ export default function Dashboard() {
                 </span>
               </div>
               
-              <Link href="/google-apps">
-                <Button variant="outline" size="sm" data-testid="button-add-google-services">
-                  <Cloud className="h-4 w-4 mr-2" />
-                  Add Google Services
-                </Button>
-              </Link>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setIsApiSettingsOpen(true)}
+                data-testid="button-api-settings"
+              >
+                <Sliders className="h-4 w-4 mr-2" />
+                API Modules
+              </Button>
               
               <Button variant="ghost" size="sm">
                 <Settings className="h-4 w-4" />
@@ -377,6 +383,61 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Create Project Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent data-testid="dialog-create-project">
+          <DialogHeader>
+            <DialogTitle>Create New Project</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="project-name">Project Name</Label>
+              <Input
+                id="project-name"
+                data-testid="input-project-name"
+                placeholder="Enter project name..."
+                value={createForm.name}
+                onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="project-description">Description (Optional)</Label>
+              <Textarea
+                id="project-description"
+                data-testid="textarea-project-description"
+                placeholder="Brief project description..."
+                value={createForm.description}
+                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleCreateProject}
+              disabled={createProjectMutation.isPending}
+              data-testid="button-confirm-create-project"
+            >
+              {createProjectMutation.isPending ? "Creating..." : "Create Project"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* API Settings Dialog */}
+      <Dialog open={isApiSettingsOpen} onOpenChange={setIsApiSettingsOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto" data-testid="dialog-api-settings">
+          <DialogHeader>
+            <DialogTitle>Google API Module Settings</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <ApiModuleManager />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

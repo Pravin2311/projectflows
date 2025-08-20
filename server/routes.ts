@@ -1932,6 +1932,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Google API module management for project owners
+  app.get('/api/google-apis/enabled', isAuthenticated, async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      if (!googleConfig) {
+        return res.status(404).json({ error: 'No Google configuration found' });
+      }
+
+      // Return enabled APIs from session
+      const enabledApis = googleConfig.enabledApis || {
+        drive: true, // Always enabled
+        ai: true,    // Always enabled
+        docs: false,
+        sheets: false,
+        gmail: false,
+        calendar: false,
+        tasks: false,
+        contacts: false
+      };
+
+      res.json({ enabledApis });
+    } catch (error) {
+      console.error('Error fetching enabled APIs:', error);
+      res.status(500).json({ error: 'Failed to fetch API settings' });
+    }
+  });
+
+  app.post('/api/google-apis/update', isAuthenticated, async (req: any, res) => {
+    try {
+      const { enabledApis } = req.body;
+      
+      if (!req.session.googleConfig) {
+        return res.status(404).json({ error: 'No Google configuration found' });
+      }
+
+      // Ensure core APIs are always enabled
+      const updatedApis = {
+        ...enabledApis,
+        drive: true, // Always required
+        ai: true     // Always required for AI features
+      };
+
+      // Update the Google config with new API selections
+      req.session.googleConfig.enabledApis = updatedApis;
+
+      // If user has projects, update those configurations too
+      const userId = req.session.user?.id;
+      if (userId) {
+        const userProjects = await storage.getUserProjects(userId);
+        for (const project of userProjects) {
+          if (project.googleApiConfig && project.ownerId === userId) {
+            project.googleApiConfig.enabledApis = updatedApis;
+            await storage.updateProject(project.id, { googleApiConfig: project.googleApiConfig });
+          }
+        }
+      }
+
+      res.json({ 
+        success: true, 
+        enabledApis: updatedApis,
+        message: 'API settings updated successfully'
+      });
+    } catch (error) {
+      console.error('Error updating API settings:', error);
+      res.status(500).json({ error: 'Failed to update API settings' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
