@@ -25,17 +25,31 @@ You need to add BOTH HTTP and HTTPS versions:
 
 4. **Click "Save"**
 
-### 3. Test Again
-After saving in Google Cloud Console:
-1. Go back to your project page
+### 3. Configure OAuth Consent Screen (CRITICAL)
+After adding redirect URIs, you must also configure the OAuth Consent Screen:
+
+1. **Go to Google Cloud Console** → **OAuth consent screen**
+2. **Choose "External"** and fill in:
+   - App name: "ProjectFlow" 
+   - User support email: Your email
+   - Developer contact: Your email
+3. **Add these exact scopes**:
+   ```
+   https://www.googleapis.com/auth/userinfo.profile
+   https://www.googleapis.com/auth/userinfo.email
+   https://www.googleapis.com/auth/drive
+   https://www.googleapis.com/auth/drive.file
+   https://www.googleapis.com/auth/gmail.send
+   ```
+4. **Add yourself as a test user**
+
+### 4. Test Again
+After completing both redirect URIs AND consent screen:
+1. Go back to your project page  
 2. Click "Enable Email Invites"
-3. OAuth should now work without the redirect_uri_mismatch error
+3. OAuth should now work completely
 
-## For Production Deployment
-When you deploy to production, add your production domain's callback URL:
-```
-https://yourdomain.com/platform-oauth-callback
-```
-
-## Why This Happens
-Google OAuth security requires pre-registration of all callback URLs to prevent unauthorized redirects. Each deployment domain needs its callback URL registered once.
+## Common OAuth Errors:
+- `redirect_uri_mismatch` = Add callback URL to Credentials
+- `access_denied` = Configure OAuth Consent Screen + Add test users
+- `invalid_client` = Check Client ID/Secret match

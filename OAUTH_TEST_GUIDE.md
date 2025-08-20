@@ -10,20 +10,41 @@ https://your-replit-url.replit.dev/platform-oauth-callback
 
 **Replace `your-replit-url` with your actual Replit URL from the browser address bar.**
 
-## Steps to Fix Right Now:
+## Current Status: ✅ Redirect URI Fixed, Now Need OAuth Consent Screen
 
-### 1. Get Your Replit URL
-- Look at your browser address bar
-- Copy the domain part (e.g., `https://abc123.replit.dev`)
+The OAuth flow is working (redirect URI resolved), but now getting `Error 403: access_denied`. This means we need to configure the OAuth Consent Screen properly.
 
-### 2. Add to Google Cloud Console
-1. **Go to Google Cloud Console** → APIs & Services → Credentials
-2. **Edit your OAuth 2.0 Client ID**
-3. **In "Authorized redirect URIs"**, add your domain + `/platform-oauth-callback`:
+## Steps to Fix Access Denied Error:
+
+### 1. Configure OAuth Consent Screen
+1. **Go to Google Cloud Console** → APIs & Services → **OAuth consent screen**
+2. **Choose "External"** (unless you have a Google Workspace domain)
+3. **Fill in required fields**:
+   - App name: "ProjectFlow" (or your platform name)
+   - User support email: Your email
+   - Developer contact information: Your email
+4. **Click "Save and Continue"**
+
+### 2. Add Required Scopes
+1. **Click "Add or Remove Scopes"**
+2. **Add these scopes exactly**:
    ```
-   https://YOUR-ACTUAL-REPL-URL.replit.dev/platform-oauth-callback
+   https://www.googleapis.com/auth/userinfo.profile
+   https://www.googleapis.com/auth/userinfo.email
+   https://www.googleapis.com/auth/drive
+   https://www.googleapis.com/auth/drive.file
+   https://www.googleapis.com/auth/gmail.send
    ```
-4. **Save the changes**
+3. **Save and Continue**
+
+### 3. Add Test Users (For Development)
+1. **In "Test users" section**, add your email address
+2. **Save and Continue**
+3. **Back to Dashboard**
+
+### 4. Publish App (Optional)
+- For development: Leave app in "Testing" mode
+- For production: Click "Publish App" (requires verification for Gmail scope)
 
 ### 3. Test the Flow
 1. Go to your project page
