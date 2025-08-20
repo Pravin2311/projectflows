@@ -24,7 +24,7 @@ export function ProgressiveGoogleSetup({ onConfigSubmit, initialConfig, isLoadin
     clientId: initialConfig?.clientId || "",
     clientSecret: initialConfig?.clientSecret || "",
     geminiApiKey: initialConfig?.geminiApiKey || "",
-    email: "", // Add email field for Gmail login
+    email: initialConfig?.email || "", // Add email field for Gmail login
   });
   
   const [enabledApis, setEnabledApis] = useState(initialConfig?.enabledApis || {

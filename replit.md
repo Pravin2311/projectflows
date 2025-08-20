@@ -6,13 +6,13 @@ This is a completely free project management platform built with React and Expre
 
 ## Recent Changes (August 20, 2025)
 
-### Simplified Onboarding with Member Login (August 20, 2025) ✅
-- **Homepage Cleanup**: Removed pricing link to maintain 100% free platform messaging
-- **Member Login Modal**: Added quick project access for team members via URL or project ID
-- **Inherited Configuration**: Team members automatically inherit project owner's Google API setup
-- **Minimal Setup Messaging**: Updated Google configuration to emphasize 2-key minimal start
-- **Progressive Enhancement**: Clear path to add more Google services after initial setup
-- **User Experience**: Streamlined login flow with member access through project URLs
+### Gmail-Only Authentication for Team Members (August 20, 2025) ✅
+- **Zero API Setup for Members**: Team members now only need Gmail address - no API credentials required
+- **Automatic Configuration Inheritance**: Members inherit all Google API settings from project owners
+- **Simplified Login Modal**: Changed from project URL/ID to simple Gmail address entry
+- **Enhanced Security**: Only project owners handle API credentials, members get secure inherited access
+- **Seamless Onboarding**: `/api/auth/gmail-login` endpoint for instant member authentication
+- **Auto Project Discovery**: System automatically finds all projects for member's email address
 
 ### Progressive Google API Setup System Implementation (August 20, 2025) ✅
 - **New Architecture**: Users start with minimal API configuration and progressively enable additional services
@@ -23,13 +23,13 @@ This is a completely free project management platform built with React and Expre
 - **Smart Defaults**: Core APIs (Drive, AI) always enabled, optional APIs user-controlled
 - **API Components**: New UI components for Google Docs and Sheets with search, creation, and management features
 
-### Major UX Improvement: Shared Google API Configuration (August 20, 2025) ✅
-- **Problem Solved**: Previously every team member needed their own Google API setup - terrible UX!
-- **New Architecture**: Project owners set up Google API credentials once, team members inherit automatically
-- **Team Onboarding**: Invited members now just sign in with Google - no API configuration required
-- **Shared Costs**: All Google API usage bills to project owner's account - simplified cost management
-- **Backend Changes**: Projects now store Google API config, auth system checks for inherited configuration
-- **UX Enhancement**: Clear messaging in UI about configuration inheritance for team owners
+### Zero-Setup Team Member Authentication (August 20, 2025) ✅
+- **Revolutionary UX**: Team members enter ONLY their Gmail address - no API setup whatsoever
+- **Perfect Security Model**: Project owners control all API credentials, members get inherited secure access
+- **Instant Authentication**: `/api/auth/gmail-login` validates email against project invitations
+- **Configuration Inheritance**: Members automatically receive project owner's Google API configuration
+- **Cost Simplification**: All API usage bills to project owner - no split billing complexity
+- **Enhanced User Experience**: True zero-configuration onboarding for invited team members
 
 ### Completely Free Model Implementation Complete (August 20, 2025) ✅
 - **Architecture Pivot**: Platform now completely free with user-provided Google AI API keys

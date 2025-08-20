@@ -13,7 +13,8 @@ import {
   Star,
   Globe,
   Lock,
-  Settings
+  Settings,
+  Mail
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -69,16 +70,27 @@ export default function Landing() {
     }
   };
 
-  const handleMemberLogin = () => {
-    if (memberLoginUrl.trim()) {
-      // Extract project ID from URL if it's a project URL
-      const projectMatch = memberLoginUrl.match(/\/project\/([a-zA-Z0-9-_]+)/);
-      if (projectMatch) {
-        window.location.href = memberLoginUrl;
+  const handleMemberLogin = async () => {
+    if (!memberLoginUrl.trim()) return;
+    
+    try {
+      const response = await fetch('/api/auth/gmail-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: memberLoginUrl.trim() }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Successful login - redirect to dashboard
+        window.location.href = '/dashboard';
       } else {
-        // Assume it's a project ID and construct the URL
-        window.location.href = `/project/${memberLoginUrl.trim()}`;
+        alert(data.error || 'Login failed. Please check your email address or contact your project owner.');
       }
+    } catch (error) {
+      console.error('Member login error:', error);
+      alert('Login failed. Please try again.');
     }
   };
 
@@ -205,14 +217,15 @@ export default function Landing() {
               </Button>
             </div>
             <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Enter your project URL or project ID to access your team project:
+              Simply enter your Gmail address to access all projects you've been invited to:
             </p>
             <div className="space-y-4">
               <Input
-                placeholder="https://yourapp.com/project/abc123 or abc123"
+                type="email"
+                placeholder="your.email@gmail.com"
                 value={memberLoginUrl}
                 onChange={(e) => setMemberLoginUrl(e.target.value)}
-                data-testid="input-member-login-url"
+                data-testid="input-member-email"
               />
               <div className="flex space-x-2">
                 <Button
@@ -228,16 +241,17 @@ export default function Landing() {
                   className="flex-1 bg-blue-600 hover:bg-blue-700"
                   data-testid="button-member-login-submit"
                 >
-                  Access Project
+                  <Mail className="h-4 w-4 mr-2" />
+                  Sign In with Gmail
                 </Button>
               </div>
             </div>
             <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
               <p className="mb-2">
-                <strong>For team members:</strong> You'll inherit the project owner's Google API configuration automatically.
+                <strong>No setup required:</strong> You'll automatically inherit project configurations from team owners.
               </p>
               <p>
-                <strong>Need help?</strong> Ask your project owner for the project URL or ID.
+                <strong>Secure:</strong> No API keys needed - your project owner handles all Google integrations.
               </p>
             </div>
           </div>

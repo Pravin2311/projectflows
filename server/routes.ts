@@ -381,14 +381,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.redirect('/?setup=google');
   });
 
-  app.post('/api/auth/google-config', async (req: any, res) => {
+  // Gmail-only login for invited team members (no API credentials required)
+  app.post('/api/auth/gmail-login', async (req: any, res) => {
     try {
-      const { apiKey, clientId, clientSecret, email } = req.body;
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ error: 'Email address is required' });
+      }
       
       // Check if this email has pending invitations or project access
-      const projectsForEmail = await storage.getProjectsForEmail(email || 'dev@example.com');
+      const projectsForEmail = await storage.getProjectsForEmail(email);
       
-      // Create user record
+      if (projectsForEmail.length === 0) {
+        return res.status(403).json({ 
+          error: 'No project access found for this email address. Please check with your project owner for an invitation.' 
+        });
+      }
+      
+      // Create user record for team member
+      const userData = {
+        id: email,
+        email: email,
+        firstName: email.split('@')[0],
+        lastName: 'User',
+        profileImageUrl: undefined,
+        subscriptionTier: 'free' as const
+      };
+
+      // Find a project with Google configuration to inherit
+      const projectWithConfig = projectsForEmail.find(project => project.googleApiConfig);
+      
+      if (projectWithConfig) {
+        // Inherit Google configuration from project owner
+        req.session.googleConfig = projectWithConfig.googleApiConfig;
+        console.log(`✅ Team member ${email} inherited Google config from project: ${projectWithConfig.name}`);
+      }
+      
+      req.session.user = userData;
+      
+      // Store in database
+      await storage.upsertUser(userData);
+
+      // Convert email-based memberships to proper user memberships
+      for (const project of projectsForEmail) {
+        const memStorage = storage as any;
+        const emailMember = Array.from(memStorage.projectMembers.values())
+          .find((member: any) => member.projectId === project.id && member.userId === email);
+        
+        if (emailMember) {
+          // Already using email as userId, no change needed
+          console.log(`✅ Confirmed membership for ${email} in project: ${project.name}`);
+        }
+      }
+
+      // Auto-accept all pending invitations
+      const memStorage = storage as any;
+      const pendingInvitations = Array.from(memStorage.invitations.values())
+        .filter((inv: any) => inv.email === email && inv.status === 'pending');
+      
+      for (const invitation of pendingInvitations) {
+        (invitation as any).status = 'accepted';
+        console.log(`✅ Auto-accepted invitation for project: ${(invitation as any).projectId}`);
+      }
+
+      res.json({ 
+        success: true, 
+        user: userData,
+        projectCount: projectsForEmail.length,
+        hasProjectAccess: true,
+        inheritedConfig: !!projectWithConfig
+      });
+    } catch (error) {
+      console.error("Error with Gmail login:", error);
+      res.status(500).json({ error: 'Failed to process Gmail login' });
+    }
+  });
+
+  // Full Google config setup (for project owners only)
+  app.post('/api/auth/google-config', async (req: any, res) => {
+    try {
+      const { apiKey, clientId, clientSecret, email, geminiApiKey } = req.body;
+      
+      // Create user record for project owner
       const userData = {
         id: email || 'dev-user-123',
         email: email || 'dev@example.com',
@@ -398,43 +473,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subscriptionTier: 'free' as const
       };
 
-      // Store in session
-      req.session.googleConfig = { apiKey, clientId, clientSecret };
+      // Store full Google config in session
+      req.session.googleConfig = { apiKey, clientId, clientSecret, geminiApiKey };
       req.session.user = userData;
       
       // Store in database
       await storage.upsertUser(userData);
 
-      // If user has project invitations, automatically convert email-based memberships to proper user memberships
-      if (projectsForEmail.length > 0 && email) {
-        for (const project of projectsForEmail) {
-          const memStorage = storage as any;
-          const emailMember = Array.from(memStorage.projectMembers.values())
-            .find((member: any) => member.projectId === project.id && member.userId === email);
-          
-          if (emailMember) {
-            // Update membership to use proper user ID instead of email
-            (emailMember as any).userId = userData.id;
-            console.log(`✅ Converted email membership to user membership for project: ${project.name}`);
-          }
-        }
-
-        // Also update any pending invitations to accepted
-        const memStorage = storage as any;
-        const pendingInvitations = Array.from(memStorage.invitations.values())
-          .filter((inv: any) => inv.email === email && inv.status === 'pending');
-        
-        for (const invitation of pendingInvitations) {
-          (invitation as any).status = 'accepted';
-          console.log(`✅ Auto-accepted invitation for project: ${(invitation as any).projectId}`);
-        }
-      }
-
       res.json({ 
         success: true, 
         user: userData,
-        projectCount: projectsForEmail.length,
-        hasProjectAccess: projectsForEmail.length > 0
+        isProjectOwner: true
       });
     } catch (error) {
       console.error("Error setting up Google config:", error);
