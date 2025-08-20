@@ -188,8 +188,21 @@ export default function ProjectPage() {
   const handleUpdateTaskStatus = async (taskId: string, status: "todo" | "in_progress" | "done") => {
     console.log("Status update clicked:", taskId, "->", status);
     
-    // Update the server directly - remove optimistic update to debug
-    updateTaskMutation.mutate({ taskId, updates: { status } });
+    // Auto-update progress based on status
+    let progress = 0;
+    if (status === "in_progress") progress = 10;
+    if (status === "done") progress = 100;
+    
+    // Update the server directly
+    updateTaskMutation.mutate({ taskId, updates: { status, progress } });
+  };
+
+  const handleUpdateTaskTime = (taskId: string, actualHours: number) => {
+    updateTaskMutation.mutate({ taskId, updates: { actualHours } });
+  };
+
+  const handleUpdateTaskProgress = (taskId: string, progress: number) => {
+    updateTaskMutation.mutate({ taskId, updates: { progress } });
   };
 
   const handleTaskClick = (task: Task) => {
@@ -847,6 +860,16 @@ export default function ProjectPage() {
                 </div>
               </div>
 
+              {/* Time Tracker Component */}
+              <TimeTracker
+                taskId={selectedTask.id}
+                currentHours={selectedTask.actualHours || 0}
+                currentProgress={selectedTask.progress || 0}
+                estimatedHours={selectedTask.estimatedHours}
+                onUpdateTime={(hours) => handleUpdateTaskTime(selectedTask.id, hours)}
+                onUpdateProgress={(progress) => handleUpdateTaskProgress(selectedTask.id, progress)}
+              />
+
               <div>
                 <h4 className="font-medium text-gray-900 dark:text-white mb-2">Attachments & Reports</h4>
                 <p className="text-sm text-gray-500 mb-3">File attachments and reports will be stored in your Google Drive.</p>
@@ -900,7 +923,7 @@ export default function ProjectPage() {
                               {/* Show mentions */}
                               {comment.mentions && comment.mentions.length > 0 && (
                                 <div className="mt-2 flex flex-wrap gap-1">
-                                  {comment.mentions.map((mentionId, index) => (
+                                  {comment.mentions.map((mentionId: string, index: number) => (
                                     <Badge key={index} variant="secondary" className="text-xs">
                                       <AtSign className="h-3 w-3 mr-1" />
                                       User {mentionId}
@@ -912,7 +935,7 @@ export default function ProjectPage() {
                               {/* Show task links */}
                               {comment.taskLinks && comment.taskLinks.length > 0 && (
                                 <div className="mt-2 flex flex-wrap gap-1">
-                                  {comment.taskLinks.map((taskId, index) => (
+                                  {comment.taskLinks.map((taskId: string, index: number) => (
                                     <Badge key={index} variant="outline" className="text-xs">
                                       <Link2 className="h-3 w-3 mr-1" />
                                       Task {taskId}
@@ -924,7 +947,7 @@ export default function ProjectPage() {
                               {/* Show attachments */}
                               {comment.attachments && comment.attachments.length > 0 && (
                                 <div className="mt-2 space-y-1">
-                                  {comment.attachments.map((attachment, index) => (
+                                  {comment.attachments.map((attachment: string, index: number) => (
                                     <div key={index} className="flex items-center gap-2 text-xs text-gray-600">
                                       <Paperclip className="h-3 w-3" />
                                       <span>{attachment}</span>
