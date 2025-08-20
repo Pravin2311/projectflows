@@ -300,6 +300,9 @@ export class MemStorage implements IStorage {
     const comment: Comment = {
       ...commentData,
       id,
+      mentions: commentData.mentions || [],
+      attachments: commentData.attachments || [],
+      taskLinks: commentData.taskLinks || [],
       createdAt: new Date().toISOString(),
     };
     this.comments.set(id, comment);

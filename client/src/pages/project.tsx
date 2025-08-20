@@ -30,11 +30,15 @@ import {
   BarChart3,
   Flag,
   FileText,
-  MessageSquare
+  MessageSquare,
+  AtSign,
+  Link2,
+  Paperclip
 } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "wouter";
 import type { Project, Task } from "@shared/schema";
+import { RichCommentEditor } from "@/components/ui/rich-comment-editor";
 
 interface TaskForm {
   title: string;
@@ -196,9 +200,24 @@ export default function ProjectPage() {
 
   // Add comment mutation
   const addCommentMutation = useMutation({
-    mutationFn: async (content: string) => {
+    mutationFn: async (commentData: {
+      content: string;
+      mentions: string[];
+      attachments: File[];
+      taskLinks: string[];
+    }) => {
       if (!selectedTask) throw new Error("No task selected");
-      return await apiRequest("POST", `/api/tasks/${selectedTask.id}/comments`, { content });
+      
+      // For now, we'll store attachment names only
+      // In production, you'd upload files to object storage first
+      const attachmentNames = commentData.attachments.map(file => file.name);
+      
+      return await apiRequest("POST", `/api/tasks/${selectedTask.id}/comments`, {
+        content: commentData.content,
+        mentions: commentData.mentions,
+        attachments: attachmentNames,
+        taskLinks: commentData.taskLinks,
+      });
     },
     onSuccess: () => {
       refetchComments(); // Refetch comments after successful creation
@@ -217,11 +236,6 @@ export default function ProjectPage() {
       });
     },
   });
-
-  const handleAddComment = () => {
-    if (!newComment.trim()) return;
-    addCommentMutation.mutate(newComment.trim());
-  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -882,6 +896,42 @@ export default function ProjectPage() {
                                 {comment.createdAt ? format(new Date(comment.createdAt), 'MMM d, yyyy h:mm a') : 'Just now'}
                               </p>
                               <p className="text-sm text-gray-700 dark:text-gray-300">{comment.content}</p>
+                              
+                              {/* Show mentions */}
+                              {comment.mentions && comment.mentions.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1">
+                                  {comment.mentions.map((mentionId, index) => (
+                                    <Badge key={index} variant="secondary" className="text-xs">
+                                      <AtSign className="h-3 w-3 mr-1" />
+                                      User {mentionId}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+                              
+                              {/* Show task links */}
+                              {comment.taskLinks && comment.taskLinks.length > 0 && (
+                                <div className="mt-2 flex flex-wrap gap-1">
+                                  {comment.taskLinks.map((taskId, index) => (
+                                    <Badge key={index} variant="outline" className="text-xs">
+                                      <Link2 className="h-3 w-3 mr-1" />
+                                      Task {taskId}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              )}
+                              
+                              {/* Show attachments */}
+                              {comment.attachments && comment.attachments.length > 0 && (
+                                <div className="mt-2 space-y-1">
+                                  {comment.attachments.map((attachment, index) => (
+                                    <div key={index} className="flex items-center gap-2 text-xs text-gray-600">
+                                      <Paperclip className="h-3 w-3" />
+                                      <span>{attachment}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -894,22 +944,14 @@ export default function ProjectPage() {
                     )}
                   </div>
                   <div className="mt-3">
-                    <Textarea
-                      placeholder="Add a comment..."
-                      rows={2}
+                    <RichCommentEditor
+                      projectId={projectId!}
                       value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      data-testid="textarea-task-comment"
+                      onChange={setNewComment}
+                      onSubmit={addCommentMutation.mutate}
+                      disabled={addCommentMutation.isPending}
+                      submitText={addCommentMutation.isPending ? "Adding..." : "Add Comment"}
                     />
-                    <Button 
-                      size="sm" 
-                      className="mt-2" 
-                      onClick={handleAddComment}
-                      disabled={addCommentMutation.isPending || !newComment.trim()}
-                      data-testid="button-add-comment"
-                    >
-                      {addCommentMutation.isPending ? "Adding..." : "Add Comment"}
-                    </Button>
                   </div>
                 </div>
               </div>

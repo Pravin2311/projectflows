@@ -115,6 +115,9 @@ export const commentSchema = z.object({
   content: z.string().min(1, "Comment content is required"),
   taskId: z.string(),
   authorId: z.string(),
+  mentions: z.array(z.string()).default([]), // Array of user IDs mentioned
+  attachments: z.array(z.string()).default([]), // Array of file URLs/paths
+  taskLinks: z.array(z.string()).default([]), // Array of linked task IDs
   createdAt: z.string().datetime(),
 });
 export type Comment = z.infer<typeof commentSchema>;

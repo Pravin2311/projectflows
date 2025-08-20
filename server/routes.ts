@@ -489,7 +489,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.session.user.id;
       const { taskId } = req.params;
-      const { content } = req.body;
+      const { content, mentions = [], attachments = [], taskLinks = [] } = req.body;
       
       if (!content || !content.trim()) {
         return res.status(400).json({ message: "Comment content is required" });
@@ -511,6 +511,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         content: content.trim(),
         taskId,
         authorId: userId,
+        mentions: mentions || [],
+        attachments: attachments || [],
+        taskLinks: taskLinks || [],
       });
       
       // Create activity
@@ -526,6 +529,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating comment:", error);
       res.status(500).json({ message: "Failed to create comment" });
+    }
+  });
+
+  // Get project members for mentions
+  app.get("/api/projects/:projectId/members", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session.user.id;
+      const { projectId } = req.params;
+      
+      // Check if user has access to project
+      const membership = await storage.getUserProjectRole(projectId, userId);
+      if (!membership) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const members = await storage.getProjectMembers(projectId);
+      res.json(members);
+    } catch (error) {
+      console.error("Error fetching project members:", error);
+      res.status(500).json({ message: "Failed to fetch project members" });
     }
   });
 
