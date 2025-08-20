@@ -33,7 +33,8 @@ import {
   MessageSquare,
   AtSign,
   Link2,
-  Paperclip
+  Paperclip,
+  RefreshCw
 } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "wouter";
@@ -104,7 +105,7 @@ export default function ProjectPage() {
     mutationFn: async () => {
       return await apiRequest("POST", "/api/auth/reauthorize-gmail");
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       window.location.href = data.authUrl;
     },
     onError: (error: Error) => {
@@ -376,7 +377,7 @@ export default function ProjectPage() {
             
             <div className="flex items-center space-x-2">
               {/* Gmail Status & Reauthorization */}
-              {authStatus && !authStatus.hasGmailScope && (
+              {authStatus && !(authStatus as any).hasGmailScope && (
                 <Button
                   variant="outline"
                   size="sm"
