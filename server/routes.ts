@@ -698,14 +698,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (invitation.status !== 'pending') {
         return res.status(400).json({ error: "Invitation already processed" });
       }
+
+      // Get the project to inherit Google configuration
+      const project = await storage.getProject(invitation.projectId);
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+
+      // Create user session with email from invitation
+      req.session.user = {
+        id: invitation.email,
+        email: invitation.email,
+        firstName: invitation.email.split('@')[0], // Use part before @ as name
+        lastName: ''
+      };
+
+      // Inherit project's Google configuration for seamless access
+      if (project.googleApiConfig) {
+        req.session.googleConfig = project.googleApiConfig;
+        console.log(`✅ Inherited Google API configuration from project "${project.name}" for user ${invitation.email}`);
+      }
       
-      // For now, just mark as accepted - in full implementation would create user account
+      // Mark invitation as accepted
       await storage.updateInvitationStatus(invitationId, 'accepted');
       
       res.json({
         success: true,
         message: "Invitation accepted successfully",
-        projectId: invitation.projectId
+        projectId: invitation.projectId,
+        hasInheritedConfig: !!project.googleApiConfig
       });
     } catch (error) {
       console.error("Error accepting invitation:", error);

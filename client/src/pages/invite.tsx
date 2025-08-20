@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Mail, CheckCircle, AlertCircle, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface InvitationDetails {
   id: string;
@@ -66,15 +66,20 @@ export default function InvitePage() {
       const response = await apiRequest("POST", `/api/invitations/${invitationId}/accept`, {});
       
       if (response.ok) {
+        const data = await response.json();
+        
         toast({
-          title: "Invitation Accepted!",
-          description: `You've joined the project "${invitation.projectName}". Please sign in to access the project.`,
+          title: "Welcome to the team!",
+          description: `You've successfully joined "${invitation.projectName}". Redirecting to your project...`,
         });
         
-        // Redirect to home page to sign in since user likely isn't authenticated
+        // Force refresh auth status to pick up inherited configuration
+        queryClient.invalidateQueries({ queryKey: ['/api/auth/status'] });
+        
+        // Redirect directly to project since user is now authenticated with inherited config
         setTimeout(() => {
-          setLocation(`/`);
-        }, 3000);
+          setLocation(`/project/${data.projectId}`);
+        }, 2000);
       } else {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to accept invitation");
@@ -238,9 +243,9 @@ export default function InvitePage() {
 
           <div className="text-center">
             <p className="text-xs text-gray-500">
-              <strong>New to ProjectFlow?</strong><br/>
-              After accepting, you'll be redirected to sign in with Google.<br/>
-              Your data stays in your Google Drive - completely free forever.
+              <strong>Zero Configuration Required!</strong><br/>
+              You'll inherit the project owner's Google setup automatically.<br/>
+              Just accept and start collaborating - completely free forever.
             </p>
           </div>
 
