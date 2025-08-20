@@ -11,9 +11,9 @@ interface GoogleUser {
 
 declare global {
   interface Window {
-    google: {
-      accounts: {
-        oauth2: {
+    google?: {
+      accounts?: {
+        oauth2?: {
           initCodeClient: (config: any) => any;
         };
       };

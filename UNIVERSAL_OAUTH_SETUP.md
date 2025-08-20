@@ -20,11 +20,11 @@ This new implementation uses **popup-based OAuth** that works on any domain with
 1. **Go to Google Cloud Console** → APIs & Services → Credentials
 2. **Create OAuth 2.0 Client ID** with these settings:
    - Application type: **Web application**  
-   - Authorized redirect URIs: **Leave empty** (Google Identity Services handles this automatically)
+   - Authorized redirect URIs: Add `postmessage` (this special URI works universally)
 3. **Enable APIs**: Gmail API, Google Drive API
 4. **Get credentials**: Client ID, Client Secret, API Key
 
-**Key Benefit**: No manual redirect URI configuration needed! The new Google Identity Services library works on any domain automatically.
+**Key Benefit**: Just add `postmessage` as the redirect URI - it works on any domain automatically without needing specific URLs.
 
 ## How It Works
 

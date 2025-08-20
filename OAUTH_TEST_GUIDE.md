@@ -11,12 +11,12 @@ Your Replit app is running on: Check the browser URL bar
 
 ### 2. Update Google Cloud Console
 1. Go to Google Cloud Console → APIs & Services → Credentials
-2. Edit your OAuth 2.0 Client ID
-3. In "Authorized redirect URIs", add:
+2. Edit your OAuth 2.0 Client ID  
+3. In "Authorized redirect URIs", add exactly:
    ```
-   https://YOUR-REPLIT-URL.replit.dev/oauth-handler.html
+   postmessage
    ```
-   Replace `YOUR-REPLIT-URL` with your actual Replit domain
+   This special URI works on ALL domains automatically
 
 ### 3. Test the Flow
 1. Go to your project page
@@ -36,8 +36,8 @@ Your Replit app is running on: Check the browser URL bar
 - Email invitations will now send real Gmail emails
 
 ### ❌ Common Issues:
-- **"Authorization Error: redirect_uri_mismatch"** = Add your domain to Google Cloud Console
-- **Popup blocked** = Enable popups for your domain
+- **"Authorization Error: redirect_uri_mismatch"** = Add `postmessage` to Google Cloud Console redirect URIs
+- **Popup blocked** = Enable popups for your domain  
 - **"OAuth failed"** = Check Google Cloud Console credentials
 
 ## Production Deployment Notes
