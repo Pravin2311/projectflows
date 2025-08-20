@@ -39,12 +39,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Check if we have access token and verify Gmail scope
     if (req.session?.googleTokens?.access_token) {
       try {
+        console.log('Checking Gmail scope for token:', req.session.googleTokens.access_token.substring(0, 20) + '...');
+        
         // Verify token has Gmail scope by making a simple test call
         const response = await fetch('https://www.googleapis.com/gmail/v1/users/me/profile', {
           headers: {
             'Authorization': `Bearer ${req.session.googleTokens.access_token}`
           }
         });
+        
+        console.log('Gmail scope check response:', { 
+          status: response.status, 
+          ok: response.ok,
+          statusText: response.statusText
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.log('Gmail scope check error response:', errorText);
+        }
+        
         hasGmailScope = response.ok;
       } catch (error) {
         console.log('Gmail scope check failed:', error);
@@ -83,6 +97,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'https://www.googleapis.com/auth/drive.file',
         'https://www.googleapis.com/auth/gmail.send'
       ].join(' ');
+      
+      console.log('Creating Gmail reauth URL with scopes:', scopes);
       
       const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/callback`;
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +

@@ -128,19 +128,30 @@ export function setupGoogleAuth(app: Express) {
         `${req.protocol}://${req.get('host')}/api/auth/callback`
       );
 
+      console.log('OAuth callback tokens received:', { 
+        hasAccessToken: !!tokens.access_token,
+        hasRefreshToken: !!tokens.refresh_token,
+        hasIdToken: !!tokens.id_token,
+        scopes: tokens.scope
+      });
+
       if (tokens.id_token) {
         const user = await authService.verifyToken(tokens.id_token);
         if (user) {
           (req.session as any).user = user;
           (req.session as any).googleTokens = tokens;
           
+          console.log('User authenticated and tokens stored in session');
+          
           // Check if we have a return URL from Gmail reauth
           const returnUrl = (req.session as any).postAuthReturnUrl;
           if (returnUrl) {
+            console.log('Redirecting to return URL:', returnUrl);
             delete (req.session as any).postAuthReturnUrl;
             return res.redirect(returnUrl);
           }
           
+          console.log('Redirecting to dashboard');
           return res.redirect('/dashboard');
         }
       }
