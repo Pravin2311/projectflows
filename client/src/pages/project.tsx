@@ -121,24 +121,47 @@ export default function ProjectPage() {
     queryKey: ['/api/auth/status'],
   });
 
-  // Gmail reauthorization mutation
+  // Gmail reauthorization using popup-based OAuth (works on any domain)
   const reauthorizeGmailMutation = useMutation({
     mutationFn: async () => {
-      // Only use project-specific return URL if we have a valid project ID
-      const returnUrl = projectId && projectId !== 'undefined' ? `/project/${projectId}` : '/dashboard';
-      const response = await apiRequest("POST", "/api/auth/reauthorize-gmail", {
-        returnUrl
+      // Get Google config from session
+      const response = await apiRequest("GET", "/api/auth/status");
+      const authStatus = await response.json();
+      
+      if (!authStatus.hasGoogleConfig) {
+        throw new Error('Google configuration not found');
+      }
+      
+      // Use dynamic import to load Google auth
+      const { createGoogleAuth } = await import('@/lib/googleAuth');
+      const googleAuth = createGoogleAuth(authStatus.clientId);
+      
+      // Try to get existing token first
+      let googleUser = await googleAuth.getExistingToken();
+      
+      // If no existing token or missing scopes, do popup sign-in
+      if (!googleUser) {
+        googleUser = await googleAuth.signInWithPopup();
+      }
+      
+      // Send the token to the server to update user session
+      const tokenResponse = await apiRequest("POST", "/api/auth/update-google-token", {
+        accessToken: googleUser.access_token,
+        refreshToken: googleUser.refresh_token,
+        scope: googleUser.scope,
+        expiresIn: googleUser.expires_in
       });
-      return await response.json();
+      
+      return await tokenResponse.json();
     },
     onSuccess: (data: any) => {
-      console.log('Gmail reauth data:', data);
-      if (data.authUrl) {
-        console.log('Redirecting to Google OAuth:', data.authUrl);
-        window.location.href = data.authUrl;
-      } else {
-        console.error('No authUrl in response:', data);
-      }
+      console.log('Gmail authorization complete:', data);
+      toast({
+        title: "Gmail Enabled",
+        description: "You can now send email invitations to team members.",
+      });
+      // Refresh auth status to update UI
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/status'] });
     },
     onError: (error: Error) => {
       toast({

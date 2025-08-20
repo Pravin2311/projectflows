@@ -70,57 +70,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       isAuthenticated: !!req.session?.user,
       hasGoogleConfig: !!req.session?.googleConfig,
       hasGmailScope,
+      clientId: req.session?.googleConfig?.clientId, // Needed for popup OAuth
       user: req.session?.user || null
     });
   });
 
-  // Re-authorize Gmail endpoint - simplified approach
-  app.post('/api/auth/reauthorize-gmail', async (req: any, res) => {
+  // Update Google token from popup OAuth (works on any domain)
+  app.post('/api/auth/update-google-token', async (req: any, res) => {
     if (!req.session?.googleConfig) {
       return res.status(401).json({ error: 'No Google config found' });
     }
 
     try {
-      const { clientId } = req.session.googleConfig;
-      const { returnUrl } = req.body;
+      const { accessToken, refreshToken, scope, expiresIn } = req.body;
       
-      // Store return URL in session for after auth
-      if (returnUrl) {
-        req.session.postAuthReturnUrl = returnUrl;
+      if (!accessToken || !scope) {
+        return res.status(400).json({ error: 'Missing required token data' });
       }
       
-      // Create OAuth URL directly without importing GoogleAuthService
-      const scopes = [
-        'https://www.googleapis.com/auth/userinfo.profile',
-        'https://www.googleapis.com/auth/userinfo.email',
-        'https://www.googleapis.com/auth/drive',
-        'https://www.googleapis.com/auth/drive.file',
-        'https://www.googleapis.com/auth/gmail.send'
-      ].join(' ');
+      // Check if we have Gmail scope
+      const hasGmailScope = scope.includes('https://www.googleapis.com/auth/gmail.send');
       
-      console.log('Creating Gmail reauth URL with scopes:', scopes);
+      // Update session with new token data
+      req.session.googleTokens = {
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        scope: scope,
+        expires_at: Date.now() + (expiresIn * 1000),
+        token_type: 'Bearer'
+      };
       
-      // Use the exact domain from the request, ensuring it matches Google OAuth config
-      const host = req.get('host');
-      const redirectUri = `https://${host}/api/auth/callback`;
-      console.log('Using redirect URI:', redirectUri);
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-        `client_id=${encodeURIComponent(clientId)}` +
-        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-        `&scope=${encodeURIComponent(scopes)}` +
-        `&response_type=code` +
-        `&access_type=offline` +
-        `&prompt=consent` +
-        `&include_granted_scopes=false` +
-        `&state=${encodeURIComponent('gmail_reauth_' + Date.now())}`; // Force unique request
+      console.log('Updated Google tokens with scopes:', scope);
       
-      console.log('Generated Gmail reauth URL:', authUrl);
-      console.log('URL length:', authUrl.length);
-      
-      res.json({ authUrl });
+      res.json({ 
+        success: true, 
+        hasGmailScope,
+        scopes: scope.split(' ')
+      });
     } catch (error) {
-      console.error('Gmail reauth error:', error);
-      res.status(400).json({ error: 'Failed to generate reauth URL: ' + error });
+      console.error('Token update error:', error);
+      res.status(400).json({ error: 'Failed to update token: ' + error });
     }
   });
 
