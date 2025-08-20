@@ -6,13 +6,13 @@ This is a completely free project management platform built with React and Expre
 
 ## Recent Changes (August 20, 2025)
 
-### Gmail-Only Authentication for Team Members (August 20, 2025) ✅
-- **Zero API Setup for Members**: Team members now only need Gmail address - no API credentials required
-- **Automatic Configuration Inheritance**: Members inherit all Google API settings from project owners
-- **Simplified Login Modal**: Changed from project URL/ID to simple Gmail address entry
-- **Enhanced Security**: Only project owners handle API credentials, members get secure inherited access
-- **Seamless Onboarding**: `/api/auth/gmail-login` endpoint for instant member authentication
-- **Auto Project Discovery**: System automatically finds all projects for member's email address
+### Universal Email Authentication for Team Members (August 20, 2025) ✅
+- **Any Email Provider Supported**: Team members can use Gmail, Yahoo, corporate emails - all supported
+- **Gmail Required for Owners**: Project owners must use Gmail for Google API credential setup
+- **Zero API Setup for Members**: Team members need no API credentials regardless of email provider
+- **Automatic Configuration Inheritance**: Members inherit all Google API settings from Gmail-based project owners
+- **Enhanced Security Model**: Only Gmail-based owners handle sensitive API credentials
+- **Universal Member Access**: `/api/auth/gmail-login` endpoint works with any email provider for members
 
 ### Progressive Google API Setup System Implementation (August 20, 2025) ✅
 - **New Architecture**: Users start with minimal API configuration and progressively enable additional services

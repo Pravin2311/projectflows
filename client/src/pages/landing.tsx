@@ -228,12 +228,12 @@ export default function Landing() {
               </Button>
             </div>
             <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Simply enter your Gmail address to access all projects you've been invited to:
+              Enter your email address to access all projects you've been invited to:
             </p>
             <div className="space-y-4">
               <Input
                 type="email"
-                placeholder="your.email@gmail.com"
+                placeholder="your.email@company.com (any email provider works)"
                 value={memberLoginUrl}
                 onChange={(e) => setMemberLoginUrl(e.target.value)}
                 data-testid="input-member-email"
@@ -253,16 +253,16 @@ export default function Landing() {
                   data-testid="button-member-login-submit"
                 >
                   <Mail className="h-4 w-4 mr-2" />
-                  Sign In with Gmail
+                  Sign In with Email
                 </Button>
               </div>
             </div>
             <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
               <p className="mb-2">
-                <strong>No setup required:</strong> You'll automatically inherit project configurations from team owners.
+                <strong>Any email works:</strong> Gmail, Yahoo, corporate emails - all supported for team members.
               </p>
               <p>
-                <strong>Secure:</strong> No API keys needed - your project owner handles all Google integrations.
+                <strong>Zero setup:</strong> Inherit project configurations automatically from your project owner.
               </p>
             </div>
           </div>

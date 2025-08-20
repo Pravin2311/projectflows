@@ -213,9 +213,9 @@ export function ProgressiveGoogleSetup({ onConfigSubmit, initialConfig, isLoadin
                 </Alert>
 
                 <form onSubmit={handleInitialSubmit} className="space-y-4">
-                  {/* Gmail Account Field */}
+                  {/* Gmail Account Field - Required for Project Owners */}
                   <div className="space-y-2">
-                    <Label htmlFor="email">Gmail Account</Label>
+                    <Label htmlFor="email">Gmail Account (Required for Project Owners)</Label>
                     <Input
                       id="email"
                       data-testid="input-email"
@@ -226,7 +226,7 @@ export function ProgressiveGoogleSetup({ onConfigSubmit, initialConfig, isLoadin
                       className="w-full"
                     />
                     <p className="text-sm text-gray-500">
-                      This Gmail account will be used to automatically check for project invitations
+                      Project owners must use Gmail for Google API integration. Team members can use any email provider.
                     </p>
                   </div>
 

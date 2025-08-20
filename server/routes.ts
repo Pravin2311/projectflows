@@ -381,7 +381,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.redirect('/?setup=google');
   });
 
-  // Gmail-only login for invited team members (no API credentials required)
+  // Email login for invited team members (any email provider - no API credentials required)
   app.post('/api/auth/gmail-login', async (req: any, res) => {
     try {
       const { email } = req.body;
@@ -484,10 +484,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Full Google config setup (for project owners only)
+  // Full Google config setup (for project owners only - must use Gmail)
   app.post('/api/auth/google-config', async (req: any, res) => {
     try {
       const { apiKey, clientId, clientSecret, email, geminiApiKey } = req.body;
+      
+      // Validate that project owner uses Gmail
+      if (email && !email.endsWith('@gmail.com')) {
+        return res.status(400).json({ 
+          error: 'Gmail Required for Project Owners',
+          message: 'Project owners must use a Gmail address to set up Google API credentials.',
+          helpText: 'This ensures proper integration with Google Workspace services. Team members can use any email provider.',
+          errorType: 'gmail_required_for_owner'
+        });
+      }
       
       // Create user record for project owner
       const userData = {
