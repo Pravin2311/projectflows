@@ -635,9 +635,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Insufficient permissions" });
       }
       
-      // Create invitation record instead of requiring existing user
-      // In a real app, this would send an email invitation
+      // Create invitation record with proper storage
       const invitationId = Math.random().toString(36).substring(2, 15);
+      
+      // Store invitation data for later acceptance
+      const invitationData = {
+        id: invitationId,
+        projectId,
+        email,
+        role,
+        inviterName: req.session.user?.firstName || req.session.user?.email || 'Team Member',
+        status: 'pending' as const,
+        createdAt: new Date().toISOString()
+      };
+      
+      // Store invitation (using temporary in-memory storage for development)
+      await storage.createInvitation(invitationData);
       
       // Send actual email invitation using Google Gmail API
       if (req.session?.googleTokens?.access_token) {
@@ -682,10 +695,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
         entityId: email,
       });
       
-      res.json(member);
+      res.json({ 
+        success: true, 
+        invitationId,
+        message: `Invitation sent to ${email}`
+      });
     } catch (error) {
       console.error("Error adding project member:", error);
       res.status(500).json({ message: "Failed to add project member" });
+    }
+  });
+
+  // Invitation routes
+  app.get("/api/invitations/:id", async (req: any, res) => {
+    try {
+      const invitationId = req.params.id;
+      const invitation = await storage.getInvitation(invitationId);
+      
+      if (!invitation) {
+        return res.status(404).json({ error: "Invitation not found" });
+      }
+      
+      // Get project details
+      const project = await storage.getProject(invitation.projectId);
+      
+      res.json({
+        id: invitation.id,
+        projectId: invitation.projectId,
+        projectName: project?.name || 'Project',
+        inviterName: invitation.inviterName,
+        role: invitation.role,
+        email: invitation.email,
+        status: invitation.status
+      });
+    } catch (error) {
+      console.error("Error fetching invitation:", error);
+      res.status(500).json({ error: "Failed to fetch invitation" });
+    }
+  });
+
+  app.post("/api/invitations/:id/accept", async (req: any, res) => {
+    try {
+      const invitationId = req.params.id;
+      const invitation = await storage.getInvitation(invitationId);
+      
+      if (!invitation) {
+        return res.status(404).json({ error: "Invitation not found" });
+      }
+      
+      if (invitation.status !== 'pending') {
+        return res.status(400).json({ error: "Invitation already processed" });
+      }
+      
+      // For now, just mark as accepted - in full implementation would create user account
+      await storage.updateInvitationStatus(invitationId, 'accepted');
+      
+      res.json({
+        success: true,
+        message: "Invitation accepted successfully",
+        projectId: invitation.projectId
+      });
+    } catch (error) {
+      console.error("Error accepting invitation:", error);
+      res.status(500).json({ error: "Failed to accept invitation" });
     }
   });
 

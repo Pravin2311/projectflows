@@ -13,6 +13,8 @@ import {
   type InsertActivity,
   type AiSuggestion,
   type InsertAiSuggestion,
+  type Invitation,
+  type InsertInvitation,
   type SubscriptionPlan,
   type UsageTracking,
 } from "../shared/schema.js";
@@ -57,6 +59,11 @@ export interface IStorage {
   getProjectAiSuggestions(projectId: string): Promise<AiSuggestion[]>;
   updateAiSuggestion(id: string, updates: Partial<InsertAiSuggestion>): Promise<AiSuggestion>;
   
+  // Invitation operations
+  createInvitation(invitation: InsertInvitation): Promise<Invitation>;
+  getInvitation(id: string): Promise<Invitation | undefined>;
+  updateInvitationStatus(id: string, status: 'pending' | 'accepted' | 'rejected'): Promise<Invitation>;
+
   // Subscription operations
   updateUserSubscription(userId: string, updates: Partial<UpsertUser>): Promise<User>;
   getUserUsage(userId: string, month: string): Promise<UsageTracking>;
@@ -72,6 +79,7 @@ export class MemStorage implements IStorage {
   private comments: Map<string, Comment> = new Map();
   private activities: Map<string, Activity> = new Map();
   private aiSuggestions: Map<string, AiSuggestion> = new Map();
+  private invitations: Map<string, Invitation> = new Map();
   private usage: Map<string, UsageTracking> = new Map(); // userId-month as key
   
   // Static subscription plans
@@ -371,6 +379,33 @@ export class MemStorage implements IStorage {
       ...updates,
     };
     this.aiSuggestions.set(id, updated);
+    return updated;
+  }
+
+  // Invitation operations
+  async createInvitation(invitationData: InsertInvitation): Promise<Invitation> {
+    const id = invitationData.id || randomUUID();
+    const invitation: Invitation = {
+      ...invitationData,
+      id,
+    };
+    this.invitations.set(id, invitation);
+    return invitation;
+  }
+
+  async getInvitation(id: string): Promise<Invitation | undefined> {
+    return this.invitations.get(id);
+  }
+
+  async updateInvitationStatus(id: string, status: 'pending' | 'accepted' | 'rejected'): Promise<Invitation> {
+    const existing = this.invitations.get(id);
+    if (!existing) throw new Error("Invitation not found");
+    
+    const updated: Invitation = {
+      ...existing,
+      status,
+    };
+    this.invitations.set(id, updated);
     return updated;
   }
 

@@ -147,6 +147,23 @@ export const insertActivitySchema = activitySchema.omit({
 });
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
 
+// Invitation schema
+export const invitationSchema = z.object({
+  id: z.string(),
+  projectId: z.string(),
+  email: z.string().email(),
+  role: z.string(),
+  inviterName: z.string(),
+  status: z.enum(["pending", "accepted", "rejected"]).default("pending"),
+  createdAt: z.string().datetime(),
+});
+export type Invitation = z.infer<typeof invitationSchema>;
+
+export const insertInvitationSchema = invitationSchema.omit({
+  id: true,
+});
+export type InsertInvitation = z.infer<typeof insertInvitationSchema>;
+
 // Sprint schema for Agile workflow
 export const sprintSchema = z.object({
   id: z.string(),

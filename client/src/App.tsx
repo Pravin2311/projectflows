@@ -11,6 +11,7 @@ import Dashboard from "@/pages/dashboard";
 import ProjectPage from "@/pages/project";
 import Pricing from "@/pages/pricing";
 import Checkout from "@/pages/checkout";
+import InvitePage from "@/pages/invite";
 
 function Router() {
   const { isAuthenticated, isLoading, hasGoogleConfig } = useAuth();
@@ -33,6 +34,7 @@ function Router() {
         <>
           <Route path="/" component={Landing} />
           <Route path="/pricing" component={Pricing} />
+          <Route path="/invite/:id" component={InvitePage} />
         </>
       ) : !hasGoogleConfig ? (
         <Route path="/">
@@ -57,6 +59,7 @@ function Router() {
               <Checkout />
             )}
           </Route>
+          <Route path="/invite/:id" component={InvitePage} />
           {/* Add more authenticated routes here */}
         </>
       )}
