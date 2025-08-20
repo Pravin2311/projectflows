@@ -10,13 +10,7 @@ const isAuthenticated = (req: any, res: any, next: any) => {
   }
 };
 import { aiService } from "./services/aiService";
-import Stripe from "stripe";
-
-if (!process.env.STRIPE_SECRET_KEY) {
-  console.warn('STRIPE_SECRET_KEY not found - subscription features will be limited');
-}
-
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+// No Stripe imports needed - platform is completely free
 import { insertProjectSchema, insertTaskSchema, insertCommentSchema } from "../shared/schema.js";
 import { z } from "zod";
 import { GoogleEmailService } from "./emailService";
@@ -407,126 +401,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Subscription routes - Stripe based
-  app.get('/api/subscription/plans', async (req, res) => {
+  // API configuration for user's own Google services
+  app.post('/api/config/google', async (req: any, res) => {
     try {
-      const plans = [
-        {
-          id: 'free',
-          name: 'Free',
-          amount: 0,
-          currency: 'USD',
-          interval: 'monthly',
-          features: [
-            'Unlimited projects in your Google Drive',
-            'Basic kanban boards',
-            'Team collaboration',
-            'Your own Google API keys required'
-          ]
-        },
-        {
-          id: 'premium',
-          name: 'Premium',
-          amount: 1900, // $19.00 in cents
-          currency: 'USD',
-          interval: 'monthly',
-          features: [
-            'Everything in Free',
-            'Advanced AI insights with Gemini',
-            'Custom automations and workflows',
-            'Advanced reporting and analytics',
-            'Priority support with direct access',
-            'Early access to new features'
-          ]
-        }
-      ];
-      res.json(plans);
-    } catch (error) {
-      console.error("Error fetching subscription plans:", error);
-      res.status(500).json({ message: "Failed to fetch subscription plans" });
-    }
-  });
-
-  // Create payment intent for Stripe checkout
-  app.post('/api/create-payment-intent', isAuthenticated, async (req: any, res) => {
-    try {
-      if (!stripe) {
-        return res.status(500).json({ message: "Stripe not configured" });
-      }
-
-      const { planId } = req.body;
-      const userId = req.session.user.id;
-      const userEmail = req.session.user.email;
-
-      // Plan pricing
-      const planPricing = {
-        managed_api: 900, // $9.00
-        premium: 1900 // $19.00
-      };
-
-      const amount = planPricing[planId as keyof typeof planPricing];
-      if (!amount) {
-        return res.status(400).json({ message: "Invalid plan" });
-      }
-
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount,
-        currency: 'usd',
-        metadata: {
-          userId,
-          planId,
-          userEmail
-        }
-      });
-
-      res.json({ 
-        clientSecret: paymentIntent.client_secret,
-        planId,
-        amount
-      });
-    } catch (error) {
-      console.error("Error creating payment intent:", error);
-      res.status(500).json({ message: "Failed to create payment intent" });
-    }
-  });
-
-  // Handle successful payment and activate subscription
-  app.post('/api/subscription/activate', isAuthenticated, async (req: any, res) => {
-    try {
-      const { paymentIntentId } = req.body;
-      const userId = req.session.user.id;
-
-      if (!stripe) {
-        return res.status(500).json({ message: "Stripe not configured" });
-      }
-
-      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      const { apiKey, clientId, clientSecret, geminiApiKey } = req.body;
       
-      if (paymentIntent.status === 'succeeded') {
-        const planId = paymentIntent.metadata.planId;
-        
-        // Update user subscription in storage
-        await storage.updateUserSubscription(userId, {
-          subscriptionTier: planId as any,
-          subscriptionStatus: 'active',
-          subscriptionExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-        });
-
-        res.json({ 
-          success: true,
-          planId,
-          status: 'active'
-        });
-      } else {
-        res.status(400).json({ message: "Payment not completed" });
-      }
+      // Store Google config in session (including Gemini API key for AI-powered insights)
+      req.session.googleConfig = { apiKey, clientId, clientSecret, geminiApiKey };
+      
+      res.json({ message: "Google configuration saved successfully" });
     } catch (error) {
-      console.error("Error activating subscription:", error);
-      res.status(500).json({ message: "Failed to activate subscription" });
+      console.error('Error saving Google config:', error);
+      res.status(500).json({ error: 'Failed to save Google configuration' });
     }
   });
 
-  app.get('/api/subscription/usage', isAuthenticated, async (req: any, res) => {
+  // Usage tracking for user's own API usage monitoring
+  app.get('/api/usage', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.session.user.id;
       const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format

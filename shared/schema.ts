@@ -5,6 +5,7 @@ export const googleApiConfigSchema = z.object({
   apiKey: z.string().min(1, "Google API key is required"),
   clientId: z.string().min(1, "Google Client ID is required"),
   clientSecret: z.string().min(1, "Google Client Secret is required"),
+  geminiApiKey: z.string().min(1, "Google AI (Gemini) API key is required"),
 });
 export type GoogleApiConfig = z.infer<typeof googleApiConfigSchema>;
 
@@ -15,11 +16,6 @@ export const userSchema = z.object({
   firstName: z.string().optional(),
   lastName: z.string().optional(),
   profileImageUrl: z.string().optional(),
-  subscriptionTier: z.enum(["free", "premium"]).default("free"),
-  subscriptionStatus: z.enum(["active", "cancelled", "expired"]).optional(),
-  subscriptionExpiry: z.string().datetime().optional(),
-  stripeCustomerId: z.string().optional(), // Stripe customer ID
-  stripeSubscriptionId: z.string().optional(), // Stripe subscription ID
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -279,25 +275,23 @@ export const projectDataSchema = z.object({
 });
 export type ProjectData = z.infer<typeof projectDataSchema>;
 
-// Subscription Plans
-export const subscriptionPlanSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string(),
-  price: z.number(),
-  features: z.array(z.string()),
-  tier: z.enum(["free", "managed_api", "premium"]),
-  popular: z.boolean().default(false),
+// AI Usage Tracking (for user's own Google AI API usage monitoring)
+export const aiUsageSchema = z.object({
+  userId: z.string(),
+  month: z.string(), // YYYY-MM format
+  geminiRequests: z.number().default(0),
+  geminiTokensUsed: z.number().default(0),
+  lastUpdated: z.string().datetime(),
 });
-export type SubscriptionPlan = z.infer<typeof subscriptionPlanSchema>;
+export type AiUsage = z.infer<typeof aiUsageSchema>;
 
-// Usage tracking for API limits
+// Usage Tracking for user's own API monitoring
 export const usageTrackingSchema = z.object({
   userId: z.string(),
   month: z.string(), // YYYY-MM format
   googleDriveRequests: z.number().default(0),
   geminiRequests: z.number().default(0),
   projectsCreated: z.number().default(0),
-  storageUsed: z.number().default(0), // in bytes
+  storageUsed: z.number().default(0), // in MB
 });
 export type UsageTracking = z.infer<typeof usageTrackingSchema>;

@@ -9,7 +9,7 @@ import { googleApiConfigSchema } from "@shared/schema";
 import { z } from "zod";
 
 interface GoogleConfigProps {
-  onConfigSubmit: (config: { apiKey: string; clientId: string; clientSecret: string }) => void;
+  onConfigSubmit: (config: { apiKey: string; clientId: string; clientSecret: string; geminiApiKey: string }) => void;
   isLoading?: boolean;
 }
 
@@ -18,6 +18,7 @@ export function GoogleConfig({ onConfigSubmit, isLoading = false }: GoogleConfig
     apiKey: "",
     clientId: "",
     clientSecret: "",
+    geminiApiKey: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -73,8 +74,8 @@ export function GoogleConfig({ onConfigSubmit, isLoading = false }: GoogleConfig
               <span>Google API Configuration</span>
             </CardTitle>
             <CardDescription>
-              To keep this platform completely free, please provide your own Google API credentials.
-              Don't worry - your keys are stored securely and only used for your projects.
+              To keep this platform completely free, provide your Google API credentials including AI access.
+              Your keys are stored securely and only used for your projects and AI-powered insights.
             </CardDescription>
           </CardHeader>
           
@@ -135,6 +136,25 @@ export function GoogleConfig({ onConfigSubmit, isLoading = false }: GoogleConfig
                 )}
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="geminiApiKey" className="flex items-center gap-2">
+                  <Key className="h-4 w-4" />
+                  Google AI (Gemini) API Key
+                </Label>
+                <Input
+                  id="geminiApiKey"
+                  data-testid="input-gemini-api-key"
+                  type="password"
+                  placeholder="Enter your Google AI API key (AIza...)"
+                  value={formData.geminiApiKey}
+                  onChange={(e) => handleInputChange("geminiApiKey", e.target.value)}
+                  className={errors.geminiApiKey ? "border-red-500" : ""}
+                />
+                {errors.geminiApiKey && (
+                  <p className="text-sm text-red-500">{errors.geminiApiKey}</p>
+                )}
+              </div>
+
               <Button 
                 type="submit" 
                 data-testid="button-connect-google"
@@ -163,19 +183,23 @@ export function GoogleConfig({ onConfigSubmit, isLoading = false }: GoogleConfig
             <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600 dark:text-gray-300">
               <li>Go to the <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center">Google Cloud Console <ExternalLink className="h-3 w-3 ml-1" /></a></li>
               <li>Create a new project or select an existing one</li>
-              <li>Enable the Google Drive API and Google+ API</li>
-              <li>Go to "Credentials" and create an API key</li>
-              <li>Create OAuth 2.0 credentials for a web application</li>
+              <li>Enable APIs: Google Drive, Google People, and <a href="https://console.cloud.google.com/apis/library/aiplatform.googleapis.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center">Gemini AI <ExternalLink className="h-3 w-3 ml-1" /></a></li>
+              <li>Go to "Credentials" and create API keys for both standard APIs and AI</li>
+              <li>Create OAuth 2.0 credentials for web application</li>
               <li>Add your domain to authorized redirect URIs</li>
             </ol>
             
             <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
               <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Required APIs:</p>
               <ul className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                <li>• Google Drive API</li>
-                <li>• Google People API</li>
-                <li>• Google OAuth2 API</li>
+                <li>• Google Drive API (for data storage)</li>
+                <li>• Google People API (for user profiles)</li>
+                <li>• Google OAuth2 API (for authentication)</li>
+                <li>• Google AI (Gemini) API (for AI-powered insights)</li>
               </ul>
+              <p className="text-xs text-gray-500 mt-2">
+                <strong>100% Free:</strong> You control your own API costs directly through Google - no subscription fees!
+              </p>
             </div>
           </CardContent>
         </Card>

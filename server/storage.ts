@@ -15,7 +15,6 @@ import {
   type InsertAiSuggestion,
   type Invitation,
   type InsertInvitation,
-  type SubscriptionPlan,
   type UsageTracking,
 } from "../shared/schema.js";
 import { randomUUID } from "crypto";
@@ -64,11 +63,9 @@ export interface IStorage {
   getInvitation(id: string): Promise<Invitation | undefined>;
   updateInvitationStatus(id: string, status: 'pending' | 'accepted' | 'rejected'): Promise<Invitation>;
 
-  // Subscription operations
-  updateUserSubscription(userId: string, updates: Partial<UpsertUser>): Promise<User>;
+  // Usage tracking operations (for user's own API monitoring)
   getUserUsage(userId: string, month: string): Promise<UsageTracking>;
   updateUsage(userId: string, month: string, updates: Partial<UsageTracking>): Promise<UsageTracking>;
-  getSubscriptionPlans(): Promise<SubscriptionPlan[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -81,58 +78,6 @@ export class MemStorage implements IStorage {
   private aiSuggestions: Map<string, AiSuggestion> = new Map();
   private invitations: Map<string, Invitation> = new Map();
   private usage: Map<string, UsageTracking> = new Map(); // userId-month as key
-  
-  // Static subscription plans
-  private subscriptionPlans: SubscriptionPlan[] = [
-    {
-      id: "free",
-      name: "Free",
-      description: "Perfect for personal projects and trying out the platform",
-      price: 0,
-      tier: "free",
-      popular: false,
-      features: [
-        "Unlimited projects in your Google Drive",
-        "Basic kanban boards",
-        "Team collaboration via email",
-        "Basic Google Drive integration",
-        "Community support"
-      ]
-    },
-    {
-      id: "managed_api",
-      name: "Managed API",
-      description: "Skip the technical setup - we handle Google API configuration",
-      price: 9,
-      tier: "managed_api", 
-      popular: true,
-      features: [
-        "Everything in Free",
-        "Pre-configured Google API access",
-        "Higher API rate limits",
-        "No technical setup required",
-        "Priority email support",
-        "Advanced Google Drive features"
-      ]
-    },
-    {
-      id: "premium", 
-      name: "Premium",
-      description: "Advanced features for power users and teams",
-      price: 19,
-      tier: "premium",
-      popular: false,
-      features: [
-        "Everything in Managed API",
-        "AI-powered project insights",
-        "Custom automations and workflows", 
-        "Advanced reporting and analytics",
-        "Custom integrations (Slack, Discord)",
-        "Time tracking and productivity metrics",
-        "Priority chat support"
-      ]
-    }
-  ];
 
   // User operations
   async getUser(id: string): Promise<User | undefined> {
@@ -384,10 +329,11 @@ export class MemStorage implements IStorage {
 
   // Invitation operations
   async createInvitation(invitationData: InsertInvitation): Promise<Invitation> {
-    const id = invitationData.id || randomUUID();
+    const id = randomUUID();
     const invitation: Invitation = {
       ...invitationData,
       id,
+      createdAt: new Date().toISOString(),
     };
     this.invitations.set(id, invitation);
     return invitation;
@@ -409,19 +355,7 @@ export class MemStorage implements IStorage {
     return updated;
   }
 
-  // Subscription operations
-  async updateUserSubscription(userId: string, updates: Partial<UpsertUser>): Promise<User> {
-    const existing = this.users.get(userId);
-    if (!existing) throw new Error("User not found");
-    
-    const updated: User = {
-      ...existing,
-      ...updates,
-      updatedAt: new Date().toISOString(),
-    };
-    this.users.set(userId, updated);
-    return updated;
-  }
+  // Usage tracking operations (for user's own API monitoring)
 
   async getUserUsage(userId: string, month: string): Promise<UsageTracking> {
     const key = `${userId}-${month}`;
@@ -456,9 +390,7 @@ export class MemStorage implements IStorage {
     return updated;
   }
 
-  async getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
-    return this.subscriptionPlans;
-  }
+
 }
 
 export const storage = new MemStorage();
