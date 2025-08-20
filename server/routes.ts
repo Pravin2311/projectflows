@@ -14,6 +14,9 @@ import { aiService } from "./services/aiService";
 import { insertProjectSchema, insertTaskSchema, insertCommentSchema } from "../shared/schema.js";
 import { z } from "zod";
 import { GoogleEmailService } from "./emailService";
+import { GooglePeopleService } from "./services/googlePeopleService";
+import { GoogleTasksService } from "./services/googleTasksService";
+import { GoogleCalendarService } from "./services/googleCalendarService";
 
 import session from 'express-session';
 
@@ -1116,6 +1119,370 @@ export async function registerRoutes(app: Express): Promise<Server> {
   </script>
 </body>
 </html>`);
+  });
+
+  // Google People API routes
+  app.get('/api/google/profile', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      const peopleService = new GooglePeopleService(googleConfig, accessToken);
+      const profile = await peopleService.getProfileInfo();
+      
+      if (!profile) {
+        return res.status(404).json({ error: 'Profile not found' });
+      }
+
+      res.json(profile);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      res.status(500).json({ error: 'Failed to fetch profile' });
+    }
+  });
+
+  app.get('/api/google/contacts', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      const query = req.query.q as string;
+      const limit = parseInt(req.query.limit as string) || 50;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      const peopleService = new GooglePeopleService(googleConfig, accessToken);
+      
+      let contacts;
+      if (query) {
+        contacts = await peopleService.searchContacts(query);
+      } else {
+        contacts = await peopleService.getContacts(limit);
+      }
+      
+      res.json(contacts);
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+      res.status(500).json({ error: 'Failed to fetch contacts' });
+    }
+  });
+
+  // Google Tasks API routes
+  app.get('/api/google/tasklists', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      const tasksService = new GoogleTasksService(googleConfig, accessToken);
+      const taskLists = await tasksService.getTaskLists();
+      
+      res.json(taskLists);
+    } catch (error) {
+      console.error('Error fetching task lists:', error);
+      res.status(500).json({ error: 'Failed to fetch task lists' });
+    }
+  });
+
+  app.post('/api/google/tasklists', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      const { title } = req.body;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      if (!title) {
+        return res.status(400).json({ error: 'Task list title is required' });
+      }
+
+      const tasksService = new GoogleTasksService(googleConfig, accessToken);
+      const taskList = await tasksService.createTaskList(title);
+      
+      if (!taskList) {
+        return res.status(500).json({ error: 'Failed to create task list' });
+      }
+
+      res.json(taskList);
+    } catch (error) {
+      console.error('Error creating task list:', error);
+      res.status(500).json({ error: 'Failed to create task list' });
+    }
+  });
+
+  app.get('/api/google/tasklists/:tasklistId/tasks', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      const { tasklistId } = req.params;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      const tasksService = new GoogleTasksService(googleConfig, accessToken);
+      const tasks = await tasksService.getTasks(tasklistId);
+      
+      res.json(tasks);
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      res.status(500).json({ error: 'Failed to fetch tasks' });
+    }
+  });
+
+  app.post('/api/google/tasklists/:tasklistId/tasks', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      const { tasklistId } = req.params;
+      const taskData = req.body;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      const tasksService = new GoogleTasksService(googleConfig, accessToken);
+      const task = await tasksService.createTask(tasklistId, taskData);
+      
+      if (!task) {
+        return res.status(500).json({ error: 'Failed to create task' });
+      }
+
+      res.json(task);
+    } catch (error) {
+      console.error('Error creating task:', error);
+      res.status(500).json({ error: 'Failed to create task' });
+    }
+  });
+
+  app.post('/api/google/tasklists/:tasklistId/tasks/:taskId/complete', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      const { tasklistId, taskId } = req.params;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      const tasksService = new GoogleTasksService(googleConfig, accessToken);
+      const task = await tasksService.completeTask(tasklistId, taskId);
+      
+      if (!task) {
+        return res.status(500).json({ error: 'Failed to complete task' });
+      }
+
+      res.json(task);
+    } catch (error) {
+      console.error('Error completing task:', error);
+      res.status(500).json({ error: 'Failed to complete task' });
+    }
+  });
+
+  app.post('/api/projects/:projectId/sync-google-tasks', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      const { projectId } = req.params;
+      const { tasklistId } = req.body;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      if (!tasklistId) {
+        return res.status(400).json({ error: 'Task list ID is required' });
+      }
+
+      const tasksService = new GoogleTasksService(googleConfig, accessToken);
+      const projectTasks = await storage.getProjectTasks(projectId);
+      
+      const syncResults = await Promise.all(
+        projectTasks.map(task => tasksService.syncProjectTask(tasklistId, task))
+      );
+
+      const syncedCount = syncResults.filter(result => result !== null).length;
+      
+      res.json({ 
+        message: `Synced ${syncedCount} tasks to Google Tasks`,
+        syncedTasks: syncedCount
+      });
+    } catch (error) {
+      console.error('Error syncing tasks:', error);
+      res.status(500).json({ error: 'Failed to sync tasks' });
+    }
+  });
+
+  // Google Calendar API routes
+  app.get('/api/google/calendars', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      const calendarService = new GoogleCalendarService(googleConfig, accessToken);
+      const calendars = await calendarService.getCalendars();
+      
+      res.json(calendars);
+    } catch (error) {
+      console.error('Error fetching calendars:', error);
+      res.status(500).json({ error: 'Failed to fetch calendars' });
+    }
+  });
+
+  app.get('/api/google/calendars/:calendarId/events', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      const { calendarId } = req.params;
+      const { timeMin, timeMax } = req.query;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      const calendarService = new GoogleCalendarService(googleConfig, accessToken);
+      const events = await calendarService.getEvents(
+        calendarId === 'primary' ? 'primary' : calendarId,
+        timeMin as string,
+        timeMax as string
+      );
+      
+      res.json(events);
+    } catch (error) {
+      console.error('Error fetching events:', error);
+      res.status(500).json({ error: 'Failed to fetch events' });
+    }
+  });
+
+  app.post('/api/google/calendars/:calendarId/events', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      const { calendarId } = req.params;
+      const eventData = req.body;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      const calendarService = new GoogleCalendarService(googleConfig, accessToken);
+      const event = await calendarService.createEvent(
+        calendarId === 'primary' ? 'primary' : calendarId,
+        eventData
+      );
+      
+      if (!event) {
+        return res.status(500).json({ error: 'Failed to create event' });
+      }
+
+      res.json(event);
+    } catch (error) {
+      console.error('Error creating event:', error);
+      res.status(500).json({ error: 'Failed to create event' });
+    }
+  });
+
+  app.post('/api/projects/:projectId/calendar/milestone', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      const { projectId } = req.params;
+      const milestoneData = req.body;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const calendarService = new GoogleCalendarService(googleConfig, accessToken);
+      const event = await calendarService.createProjectMilestone(project.name, milestoneData);
+      
+      if (!event) {
+        return res.status(500).json({ error: 'Failed to create milestone event' });
+      }
+
+      res.json(event);
+    } catch (error) {
+      console.error('Error creating milestone:', error);
+      res.status(500).json({ error: 'Failed to create milestone' });
+    }
+  });
+
+  app.post('/api/projects/:projectId/calendar/meeting', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      const { projectId } = req.params;
+      const meetingData = req.body;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const calendarService = new GoogleCalendarService(googleConfig, accessToken);
+      const event = await calendarService.createTeamMeeting(project.name, meetingData);
+      
+      if (!event) {
+        return res.status(500).json({ error: 'Failed to create meeting event' });
+      }
+
+      res.json(event);
+    } catch (error) {
+      console.error('Error creating meeting:', error);
+      res.status(500).json({ error: 'Failed to create meeting' });
+    }
+  });
+
+  app.get('/api/projects/:projectId/calendar/deadlines', async (req: any, res) => {
+    try {
+      const googleConfig = req.session.googleConfig;
+      const accessToken = req.session.googleTokens?.access_token;
+      const { projectId } = req.params;
+      const { daysAhead } = req.query;
+      
+      if (!googleConfig || !accessToken) {
+        return res.status(401).json({ error: 'Google authentication required' });
+      }
+
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      const calendarService = new GoogleCalendarService(googleConfig, accessToken);
+      const deadlines = await calendarService.getProjectDeadlines(
+        project.name,
+        daysAhead ? parseInt(daysAhead as string) : 30
+      );
+      
+      res.json(deadlines);
+    } catch (error) {
+      console.error('Error fetching deadlines:', error);
+      res.status(500).json({ error: 'Failed to fetch deadlines' });
+    }
   });
 
   const httpServer = createServer(app);
