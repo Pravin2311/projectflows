@@ -51,5 +51,13 @@ After completing both redirect URIs AND consent screen:
 
 ## Common OAuth Errors:
 - `redirect_uri_mismatch` = Add callback URL to Credentials
-- `access_denied` = Configure OAuth Consent Screen + Add test users
+- `access_denied` = Configure OAuth Consent Screen + Add test users  
+- `Access blocked` = Add yourself as test user in OAuth consent screen
 - `invalid_client` = Check Client ID/Secret match
+
+## Critical Final Step - Add Test User:
+If you see "Access blocked" message:
+1. Go to Google Cloud Console → OAuth consent screen
+2. Scroll to "Test users" section → ADD USERS
+3. Add your email address: `mydomain2311@gmail.com`
+4. Save and try OAuth again

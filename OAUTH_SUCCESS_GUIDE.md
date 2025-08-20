@@ -28,19 +28,24 @@ After successful OAuth completion, you should see:
 - Email invite functionality becomes active
 - Ability to send real Gmail invitations to team members
 
-## If You Encounter Issues
+## URGENT: Add Yourself as Test User
 
-### Common Solutions:
-- **Still getting access_denied**: Make sure you added yourself as a test user
-- **Scope errors**: Verify all 5 scopes are added in consent screen
-- **Redirect errors**: Ensure both HTTP and HTTPS callback URLs are added
+Your OAuth app is in "Testing" mode, which means you need to add yourself as a test user to access it.
 
-### Test User Setup:
-If OAuth still fails, ensure you're added as a test user:
-1. Go to OAuth consent screen → Test users
-2. Add your email address 
-3. Save changes
-4. Try OAuth flow again
+### Steps to Add Test User:
+1. **Go to Google Cloud Console** → APIs & Services → **OAuth consent screen**
+2. **Scroll down to "Test users" section**
+3. **Click "ADD USERS"**
+4. **Add your email**: `mydomain2311@gmail.com` (from your screenshot)
+5. **Click "Save"**
+6. **Go back to your project and try OAuth again**
+
+### After Adding Test User:
+1. Click "Enable Email Invites" in your project
+2. Complete OAuth flow - should work now without "Access blocked" error
+3. You'll see "Gmail Enabled" notification
+
+This is the final step to make OAuth work!
 
 ## Next Steps After Success
 Once OAuth works:
