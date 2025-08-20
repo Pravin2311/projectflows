@@ -165,9 +165,10 @@ export default function ProjectPage() {
     // Prepare task data with proper formatting
     const taskData = {
       ...taskForm,
-      dueDate: taskForm.dueDate || undefined, // Send undefined instead of empty string
+      dueDate: taskForm.dueDate || undefined,
       startDate: taskForm.startDate || undefined,
       assigneeId: taskForm.assignee || undefined,
+      attachments: attachments.map(file => file.name), // Store file names for now
     };
     
     createTaskMutation.mutate(taskData);
@@ -730,6 +731,24 @@ export default function ProjectPage() {
                       <span className="text-gray-500">Time Spent:</span>
                       <span>{selectedTask.actualHours}h</span>
                     </div>
+                    {selectedTask.assigneeId && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Assigned to:</span>
+                        <span>{selectedTask.assigneeId}</span>
+                      </div>
+                    )}
+                    {selectedTask.dueDate && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Due Date:</span>
+                        <span>{format(new Date(selectedTask.dueDate), 'MMM d, yyyy')}</span>
+                      </div>
+                    )}
+                    {selectedTask.attachments && selectedTask.attachments.length > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Attachments:</span>
+                        <span>{selectedTask.attachments.length} file(s)</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -780,13 +799,31 @@ export default function ProjectPage() {
               <div>
                 <h4 className="font-medium text-gray-900 dark:text-white mb-2">Attachments & Reports</h4>
                 <p className="text-sm text-gray-500 mb-3">File attachments and reports will be stored in your Google Drive.</p>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                  <FileText className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-500">No attachments yet</p>
-                  <Button variant="outline" size="sm" className="mt-2">
-                    Add Files
-                  </Button>
-                </div>
+                
+                {selectedTask.attachments && selectedTask.attachments.length > 0 ? (
+                  <div className="space-y-2">
+                    {selectedTask.attachments.map((attachment, index) => (
+                      <div key={index} className="flex items-center space-x-2 p-2 border rounded-lg">
+                        <FileText className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">{attachment}</span>
+                        <Button variant="outline" size="sm" className="ml-auto">
+                          Download
+                        </Button>
+                      </div>
+                    ))}
+                    <Button variant="outline" size="sm" className="mt-2">
+                      Add More Files
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                    <FileText className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                    <p className="text-sm text-gray-500">No attachments yet</p>
+                    <Button variant="outline" size="sm" className="mt-2">
+                      Add Files
+                    </Button>
+                  </div>
+                )}
               </div>
 
               <div>
