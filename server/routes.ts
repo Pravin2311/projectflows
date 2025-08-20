@@ -50,6 +50,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       const { clientId } = req.session.googleConfig;
+      const { returnUrl } = req.body;
+      
+      // Store return URL in session for after auth
+      if (returnUrl) {
+        req.session.postAuthReturnUrl = returnUrl;
+      }
       
       // Create OAuth URL directly without importing GoogleAuthService
       const scopes = [

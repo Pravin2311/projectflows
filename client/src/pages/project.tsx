@@ -103,7 +103,9 @@ export default function ProjectPage() {
   // Gmail reauthorization mutation
   const reauthorizeGmailMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", "/api/auth/reauthorize-gmail");
+      return await apiRequest("POST", "/api/auth/reauthorize-gmail", {
+        returnUrl: window.location.pathname
+      });
     },
     onSuccess: (data: any) => {
       window.location.href = data.authUrl;
@@ -377,7 +379,7 @@ export default function ProjectPage() {
             
             <div className="flex items-center space-x-2">
               {/* Gmail Status & Reauthorization */}
-              {authStatus && !(authStatus as any)?.hasGmailScope && (
+              {authStatus && !(authStatus as any)?.hasGmailScope && (authStatus as any)?.isAuthenticated && (
                 <Button
                   variant="outline"
                   size="sm"

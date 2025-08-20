@@ -133,6 +133,14 @@ export function setupGoogleAuth(app: Express) {
         if (user) {
           (req.session as any).user = user;
           (req.session as any).googleTokens = tokens;
+          
+          // Check if we have a return URL from Gmail reauth
+          const returnUrl = (req.session as any).postAuthReturnUrl;
+          if (returnUrl) {
+            delete (req.session as any).postAuthReturnUrl;
+            return res.redirect(returnUrl);
+          }
+          
           return res.redirect('/dashboard');
         }
       }
