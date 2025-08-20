@@ -16,6 +16,7 @@ export const googleApiConfigSchema = z.object({
     calendar: z.boolean().default(false),
     docs: z.boolean().default(false),
     sheets: z.boolean().default(false),
+    confluence: z.boolean().default(false), // Alternative to Google Docs for project documentation
   }).default({
     drive: true,
     gmail: false,
