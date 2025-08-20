@@ -162,11 +162,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { scopes } = req.body;
       
-      // Use platform's OAuth credentials or fall back to user credentials
-      const PLATFORM_CLIENT_ID = process.env.PLATFORM_GOOGLE_CLIENT_ID || req.session.googleConfig?.clientId;
+      // Environment-based OAuth credential selection
+      const isProduction = process.env.NODE_ENV === 'production';
+      const isDevelopment = !isProduction;
+      
+      // Use production or development credentials based on environment
+      const PLATFORM_CLIENT_ID = isProduction 
+        ? process.env.PLATFORM_GOOGLE_CLIENT_ID_PROD 
+        : (process.env.PLATFORM_GOOGLE_CLIENT_ID || req.session.googleConfig?.clientId);
+      
       if (!PLATFORM_CLIENT_ID) {
-        return res.status(400).json({ error: 'Platform OAuth not configured' });
+        const envType = isProduction ? 'Production' : 'Development';
+        return res.status(400).json({ 
+          error: `${envType} OAuth not configured`,
+          environment: envType.toLowerCase(),
+          hint: isDevelopment ? 'Using HTTP-enabled OAuth for development' : 'Requires HTTPS-only OAuth for production'
+        });
       }
+      
+      console.log(`[${isProduction ? 'PROD' : 'DEV'}] Using OAuth Client ID: ${PLATFORM_CLIENT_ID.substring(0, 20)}...`);
       
       // Force HTTPS for production, but support HTTP for local development
       const protocol = req.get('host')?.includes('replit.dev') ? 'https' : req.protocol;
@@ -184,7 +198,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
       
-      res.json({ authUrl });
+      console.log(`[${isProduction ? 'PROD' : 'DEV'}] Generated OAuth URL for redirect: ${redirectUri}`);
+      
+      res.json({ 
+        authUrl,
+        environment: isProduction ? 'production' : 'development',
+        redirectUri,
+        supportsHttp: isDevelopment
+      });
     } catch (error) {
       console.error('Platform OAuth URL generation error:', error);
       res.status(500).json({ error: 'Failed to generate OAuth URL' });
@@ -214,9 +235,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `);
       }
 
-      // Exchange code for tokens using platform credentials or user credentials
-      const PLATFORM_CLIENT_ID = process.env.PLATFORM_GOOGLE_CLIENT_ID || req.session.googleConfig?.clientId;
-      const PLATFORM_CLIENT_SECRET = process.env.PLATFORM_GOOGLE_CLIENT_SECRET || req.session.googleConfig?.clientSecret;
+      // Environment-based credential selection for token exchange
+      const isProduction = process.env.NODE_ENV === 'production';
+      const PLATFORM_CLIENT_ID = isProduction 
+        ? process.env.PLATFORM_GOOGLE_CLIENT_ID_PROD 
+        : (process.env.PLATFORM_GOOGLE_CLIENT_ID || req.session.googleConfig?.clientId);
+      const PLATFORM_CLIENT_SECRET = isProduction 
+        ? process.env.PLATFORM_GOOGLE_CLIENT_SECRET_PROD 
+        : (process.env.PLATFORM_GOOGLE_CLIENT_SECRET || req.session.googleConfig?.clientSecret);
       
       if (!PLATFORM_CLIENT_ID || !PLATFORM_CLIENT_SECRET) {
         return res.send(`
@@ -268,7 +294,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         expires_at: Date.now() + (tokens.expires_in * 1000)
       };
 
-      console.log('✅ Platform OAuth tokens successfully stored');
+      console.log(`✅ [${isProduction ? 'PROD' : 'DEV'}] Platform OAuth tokens successfully stored with scopes: ${tokens.scope}`);
       
       // Send tokens back to parent window
       res.send(`

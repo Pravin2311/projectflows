@@ -63,6 +63,8 @@ Business goal: Focus on completely free Google-first architecture with optional 
 
 **SOLUTION IDENTIFIED**: Google requires HTTPS-only redirect URIs for production OAuth apps. Mixed HTTP/HTTPS URIs prevent publishing to production. Solution: Deploy with Replit custom domain (automatic HTTPS) + create HTTPS-only production OAuth app.
 
+**DEVELOPMENT HTTP FALLBACK IMPLEMENTED (August 20, 2025)**: Environment-based OAuth credential selection now active. Development mode uses HTTP-compatible OAuth (current setup), production mode will use HTTPS-only OAuth credentials when deployed.
+
 ## System Architecture
 
 ### Frontend Architecture
