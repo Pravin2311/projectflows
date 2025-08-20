@@ -74,11 +74,17 @@ export default function ProjectPage() {
     status: "todo",
     priority: "medium",
     tags: [],
-    sprintId: ""
+    sprintId: "",
+    assignee: "",
+    dueDate: "",
+    estimatedHours: 0
   });
 
   const [currentView, setCurrentView] = useState<"kanban" | "gantt" | "sprints">("kanban");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
+  const [attachments, setAttachments] = useState<File[]>([]);
 
   // Fetch project details
   const { data: project, isLoading: projectLoading } = useQuery<Project>({
@@ -100,7 +106,8 @@ export default function ProjectPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/tasks`] });
       setIsCreateTaskOpen(false);
-      setTaskForm({ title: "", description: "", status: "todo", priority: "medium", tags: [], sprintId: "" });
+      setTaskForm({ title: "", description: "", status: "todo", priority: "medium", tags: [], sprintId: "", assignee: "", dueDate: "", estimatedHours: 0 });
+      setAttachments([]);
       toast({
         title: "Task created",
         description: "Your new task has been added to the project.",
@@ -162,6 +169,17 @@ export default function ProjectPage() {
     
     // Update the server directly - remove optimistic update to debug
     updateTaskMutation.mutate({ taskId, updates: { status } });
+  };
+
+  const handleTaskClick = (task: Task) => {
+    setSelectedTask(task);
+    setIsTaskDetailOpen(true);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setAttachments(Array.from(e.target.files));
+    }
   };
 
   const tasksByStatus = {
@@ -386,11 +404,12 @@ export default function ProjectPage() {
                       key={task.id} 
                       data-testid={`task-card-${task.id}`}
                       className="hover:shadow-md transition-shadow cursor-pointer"
+                      onClick={() => handleTaskClick(task)}
                     >
                       <CardHeader className="pb-2">
                         <div className="flex items-start justify-between">
                           <CardTitle className="text-sm font-medium">{task.title}</CardTitle>
-                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={(e) => e.stopPropagation()}>
                             <MoreHorizontal className="h-3 w-3" />
                           </Button>
                         </div>
@@ -413,7 +432,10 @@ export default function ProjectPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleUpdateTaskStatus(task.id, "todo")}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateTaskStatus(task.id, "todo");
+                                }}
                                 className="h-6 px-2 text-xs"
                               >
                                 ← To Do
@@ -423,7 +445,10 @@ export default function ProjectPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleUpdateTaskStatus(task.id, "in_progress")}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateTaskStatus(task.id, "in_progress");
+                                }}
                                 className="h-6 px-2 text-xs"
                               >
                                 {status === "todo" ? "Start →" : "← In Progress"}
@@ -433,7 +458,10 @@ export default function ProjectPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleUpdateTaskStatus(task.id, "done")}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleUpdateTaskStatus(task.id, "done");
+                                }}
                                 className="h-6 px-2 text-xs"
                               >
                                 Done →
@@ -516,6 +544,270 @@ export default function ProjectPage() {
           <SprintManager projectId={projectId!} tasks={tasks} />
         )}
       </div>
+
+      {/* Enhanced Create Task Dialog */}
+      <Dialog open={isCreateTaskOpen} onOpenChange={setIsCreateTaskOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Create New Task</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="task-title">Title *</Label>
+                <Input
+                  id="task-title"
+                  data-testid="input-task-title"
+                  value={taskForm.title}
+                  onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })}
+                  placeholder="Enter task title..."
+                />
+              </div>
+              <div>
+                <Label htmlFor="task-priority">Priority</Label>
+                <select
+                  id="task-priority"
+                  data-testid="select-task-priority"
+                  value={taskForm.priority}
+                  onChange={(e) => setTaskForm({ ...taskForm, priority: e.target.value as any })}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="task-description">Description</Label>
+              <Textarea
+                id="task-description"
+                data-testid="textarea-task-description"
+                value={taskForm.description}
+                onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })}
+                placeholder="Describe the task..."
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="task-assignee">Assign To</Label>
+                <Input
+                  id="task-assignee"
+                  data-testid="input-task-assignee"
+                  value={taskForm.assignee}
+                  onChange={(e) => setTaskForm({ ...taskForm, assignee: e.target.value })}
+                  placeholder="Enter email or name..."
+                />
+              </div>
+              <div>
+                <Label htmlFor="task-due-date">Due Date</Label>
+                <Input
+                  id="task-due-date"
+                  data-testid="input-task-due-date"
+                  type="date"
+                  value={taskForm.dueDate}
+                  onChange={(e) => setTaskForm({ ...taskForm, dueDate: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="task-estimated-hours">Estimated Hours</Label>
+              <Input
+                id="task-estimated-hours"
+                data-testid="input-task-estimated-hours"
+                type="number"
+                min="0"
+                step="0.5"
+                value={taskForm.estimatedHours}
+                onChange={(e) => setTaskForm({ ...taskForm, estimatedHours: parseFloat(e.target.value) || 0 })}
+                placeholder="0"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="task-attachments">Attach Files</Label>
+              <Input
+                id="task-attachments"
+                data-testid="input-task-attachments"
+                type="file"
+                multiple
+                onChange={handleFileUpload}
+                className="cursor-pointer"
+              />
+              {attachments.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {attachments.map((file, index) => (
+                    <div key={index} className="text-sm text-gray-600 flex items-center">
+                      <FileText className="h-4 w-4 mr-2" />
+                      {file.name} ({(file.size / 1024).toFixed(1)} KB)
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setIsCreateTaskOpen(false)}
+                data-testid="button-cancel-task"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateTask}
+                disabled={createTaskMutation.isPending}
+                data-testid="button-create-task"
+              >
+                {createTaskMutation.isPending ? "Creating..." : "Create Task"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Task Detail Popup */}
+      <Dialog open={isTaskDetailOpen} onOpenChange={setIsTaskDetailOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>{selectedTask?.title}</span>
+              <Badge className={priorityConfig[selectedTask?.priority || 'medium'].color}>
+                {priorityConfig[selectedTask?.priority || 'medium'].label}
+              </Badge>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedTask && (
+            <div className="space-y-6">
+              <div className="flex items-center space-x-4">
+                <Badge className={`${statusConfig[selectedTask.status].color} text-white`}>
+                  {statusConfig[selectedTask.status].label}
+                </Badge>
+                <span className="text-sm text-gray-500">
+                  Created {format(new Date(selectedTask.createdAt), 'MMM d, yyyy')}
+                </span>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Description</h4>
+                <p className="text-gray-600 dark:text-gray-300">
+                  {selectedTask.description || 'No description provided.'}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Task Details</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Status:</span>
+                      <span>{statusConfig[selectedTask.status].label}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Priority:</span>
+                      <span>{priorityConfig[selectedTask.priority].label}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Progress:</span>
+                      <span>{selectedTask.progress}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Time Spent:</span>
+                      <span>{selectedTask.actualHours}h</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Actions</h4>
+                  <div className="space-y-2">
+                    {selectedTask.status === "todo" && (
+                      <Button
+                        className="w-full"
+                        onClick={() => {
+                          handleUpdateTaskStatus(selectedTask.id, "in_progress");
+                          setIsTaskDetailOpen(false);
+                        }}
+                        data-testid="button-start-task"
+                      >
+                        Start Task
+                      </Button>
+                    )}
+                    {selectedTask.status === "in_progress" && (
+                      <Button
+                        className="w-full"
+                        onClick={() => {
+                          handleUpdateTaskStatus(selectedTask.id, "done");
+                          setIsTaskDetailOpen(false);
+                        }}
+                        data-testid="button-complete-task"
+                      >
+                        Mark Complete
+                      </Button>
+                    )}
+                    {selectedTask.status === "done" && (
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => {
+                          handleUpdateTaskStatus(selectedTask.id, "in_progress");
+                          setIsTaskDetailOpen(false);
+                        }}
+                        data-testid="button-reopen-task"
+                      >
+                        Reopen Task
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Attachments & Reports</h4>
+                <p className="text-sm text-gray-500 mb-3">File attachments and reports will be stored in your Google Drive.</p>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                  <FileText className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-500">No attachments yet</p>
+                  <Button variant="outline" size="sm" className="mt-2">
+                    Add Files
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Comments</h4>
+                <div className="space-y-3">
+                  <div className="border rounded-lg p-3">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm">
+                        {user?.firstName?.[0] || 'U'}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
+                        <p className="text-xs text-gray-500">Task created</p>
+                      </div>
+                    </div>
+                  </div>
+                  <Textarea
+                    placeholder="Add a comment..."
+                    rows={2}
+                    data-testid="textarea-task-comment"
+                  />
+                  <Button size="sm" data-testid="button-add-comment">
+                    Add Comment
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
