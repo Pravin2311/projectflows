@@ -134,7 +134,7 @@ export default function ProjectPage() {
       
       // Use dynamic import to load Google auth
       const { createGoogleAuth } = await import('@/lib/googleAuth');
-      const googleAuth = createGoogleAuth(authStatus.clientId);
+      const googleAuth = createGoogleAuth();
       
       // Try to get existing token first
       let googleUser = await googleAuth.getExistingToken();

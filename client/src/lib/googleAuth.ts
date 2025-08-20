@@ -1,5 +1,5 @@
-// Universal Google OAuth using Google Identity Services
-// Works on any domain without manual redirect URI configuration
+// Platform-Managed Google OAuth
+// Users never need to configure Google Cloud Console
 
 interface GoogleUser {
   access_token: string;
@@ -9,115 +9,87 @@ interface GoogleUser {
   expires_in: number;
 }
 
-declare global {
-  interface Window {
-    google?: {
-      accounts?: {
-        oauth2?: {
-          initCodeClient: (config: any) => any;
-        };
-      };
-    };
-  }
-}
-
-export class UniversalGoogleAuth {
-  private clientId: string;
+export class PlatformManagedAuth {
   private scopes: string[];
-  private codeClient: any = null;
 
-  constructor(clientId: string, scopes: string[]) {
-    this.clientId = clientId;
+  constructor(scopes: string[]) {
     this.scopes = scopes;
   }
 
-  private async loadGoogleIdentityServices(): Promise<void> {
+  async signInWithPopup(): Promise<GoogleUser> {
+    console.log('Starting platform-managed OAuth with scopes:', this.scopes);
+    
+    // Use platform's OAuth credentials - no user setup required
+    const response = await fetch('/api/auth/platform-oauth-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scopes: this.scopes }),
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to get OAuth URL from platform');
+    }
+
+    const { authUrl } = await response.json();
+
     return new Promise((resolve, reject) => {
-      if (window.google?.accounts?.oauth2) {
-        resolve();
+      // Open popup window
+      const popup = window.open(
+        authUrl,
+        'platform-oauth',
+        'width=500,height=600,scrollbars=yes,resizable=yes'
+      );
+
+      if (!popup) {
+        reject(new Error('Popup blocked by browser. Please enable popups and try again.'));
         return;
       }
 
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.onload = () => {
-        // Wait a moment for the Google object to be fully initialized
-        setTimeout(() => {
-          if (window.google?.accounts?.oauth2) {
-            resolve();
-          } else {
-            reject(new Error('Google Identity Services failed to load'));
+      // Listen for messages from popup
+      const messageListener = async (event: MessageEvent) => {
+        // Accept messages from our own domain
+        if (event.origin !== window.location.origin) {
+          return;
+        }
+
+        console.log('Received OAuth message:', event.data);
+
+        if (event.data && typeof event.data === 'object') {
+          window.removeEventListener('message', messageListener);
+          
+          if (event.data.error) {
+            popup.close();
+            reject(new Error(`OAuth failed: ${event.data.error}`));
+            return;
           }
-        }, 100);
-      };
-      script.onerror = () => reject(new Error('Failed to load Google Identity Services'));
-      document.head.appendChild(script);
-    });
-  }
 
-  async signInWithPopup(): Promise<GoogleUser> {
-    console.log('Starting Google Identity Services OAuth with scopes:', this.scopes);
-    
-    if (!this.clientId) {
-      throw new Error('Google Client ID not provided');
-    }
-
-    await this.loadGoogleIdentityServices();
-
-    return new Promise((resolve, reject) => {
-      try {
-        // Initialize the code client
-        this.codeClient = window.google.accounts.oauth2.initCodeClient({
-          client_id: this.clientId,
-          scope: this.scopes.join(' '),
-          ux_mode: 'popup',
-          callback: async (response: any) => {
-            console.log('Google OAuth response:', response);
+          if (event.data.success && event.data.tokens) {
+            popup.close();
+            console.log('Platform OAuth successful');
             
-            if (response.error) {
-              reject(new Error(`OAuth failed: ${response.error}`));
-              return;
-            }
+            resolve({
+              access_token: event.data.tokens.access_token,
+              refresh_token: event.data.tokens.refresh_token,
+              scope: event.data.tokens.scope,
+              token_type: event.data.tokens.token_type || 'Bearer',
+              expires_in: event.data.tokens.expires_in
+            });
+            return;
+          }
+        }
+      };
 
-            if (response.code) {
-              try {
-                // Exchange code for tokens using our backend
-                const tokenResponse = await fetch('/api/auth/exchange-oauth-code', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ code: response.code }),
-                  credentials: 'include'
-                });
+      window.addEventListener('message', messageListener);
 
-                if (!tokenResponse.ok) {
-                  const errorText = await tokenResponse.text();
-                  throw new Error(`Token exchange failed: ${errorText}`);
-                }
-
-                const tokens = await tokenResponse.json();
-                console.log('Successfully exchanged code for tokens');
-                
-                resolve({
-                  access_token: tokens.access_token,
-                  refresh_token: tokens.refresh_token,
-                  scope: tokens.scope,
-                  token_type: tokens.token_type || 'Bearer',
-                  expires_in: tokens.expires_in
-                });
-              } catch (error: any) {
-                console.error('Token exchange failed:', error);
-                reject(new Error(`Token exchange failed: ${error.message}`));
-              }
-            }
-          },
-        });
-
-        // Request the authorization code
-        this.codeClient.requestCode();
-      } catch (error: any) {
-        console.error('Google OAuth initialization failed:', error);
-        reject(new Error(`Google OAuth failed: ${error.message}`));
-      }
+      // Check if popup was closed manually
+      const checkClosed = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(checkClosed);
+          window.removeEventListener('message', messageListener);
+          reject(new Error('OAuth popup was closed'));
+        }
+      }, 1000);
     });
   }
 
@@ -141,7 +113,7 @@ export class UniversalGoogleAuth {
   }
 }
 
-export const createGoogleAuth = (clientId: string) => {
+export const createGoogleAuth = () => {
   const scopes = [
     'https://www.googleapis.com/auth/userinfo.profile',
     'https://www.googleapis.com/auth/userinfo.email', 
@@ -150,5 +122,5 @@ export const createGoogleAuth = (clientId: string) => {
     'https://www.googleapis.com/auth/gmail.send'
   ];
   
-  return new UniversalGoogleAuth(clientId, scopes);
+  return new PlatformManagedAuth(scopes);
 };
