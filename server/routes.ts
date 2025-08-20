@@ -331,6 +331,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // In a real app, this would send an email invitation
       const invitationId = Math.random().toString(36).substring(2, 15);
       
+      // TODO: In production, send actual email invitation here
+      console.log(`🚀 EMAIL INVITATION (Demo Mode):`);
+      console.log(`   To: ${email}`);
+      console.log(`   Project: ${projectId}`);
+      console.log(`   Role: ${role}`);
+      console.log(`   Invitation Link: https://projectflow.app/invite/${invitationId}`);
+      
       const member = await storage.addProjectMember({
         projectId,
         userId: email, // Use email as temporary ID until user joins

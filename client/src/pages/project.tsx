@@ -219,8 +219,8 @@ export default function ProjectPage() {
       setInviteEmail("");
       setInviteRole("member");
       toast({
-        title: "Invitation sent",
-        description: "Team member has been invited to the project.",
+        title: "Invitation created",
+        description: `${email} has been added as ${role}. In production, they would receive an email invitation.`,
       });
     },
     onError: (error: Error) => {
