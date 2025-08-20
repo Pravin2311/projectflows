@@ -13,7 +13,7 @@ interface TeamMembersProps {
 }
 
 export function TeamMembers({ projectId, onAddMember }: TeamMembersProps) {
-  const { data: members = [], isLoading } = useQuery({
+  const { data: members = [], isLoading } = useQuery<(ProjectMember & { user: User })[]>({
     queryKey: ["/api/projects", projectId, "members"],
     enabled: !!projectId,
   });
@@ -116,7 +116,10 @@ export function TeamMembers({ projectId, onAddMember }: TeamMembersProps) {
         ) : (
           <div className="space-y-3">
             {members.map((member: ProjectMember & { user: User }) => {
-              const status = getRandomStatus(); // In a real app, this would come from user data
+              // Use consistent status simulation based on user ID for stable display
+              const statusOptions = ["online", "away", "offline"] as const;
+              const statusIndex = (member.user.id || '').length % 3;
+              const status = statusOptions[statusIndex];
               
               return (
                 <div
@@ -178,7 +181,11 @@ export function TeamMembers({ projectId, onAddMember }: TeamMembersProps) {
           <div className="flex items-center justify-between text-sm mt-1">
             <span className="text-gray-600">Online Now</span>
             <span className="font-medium text-green-600" data-testid="text-online-count">
-              {members.filter(() => Math.random() > 0.5).length}
+              {members.filter((member: ProjectMember & { user: User }) => {
+                const statusOptions = ["online", "away", "offline"] as const;
+                const statusIndex = (member.user.id || '').length % 3;
+                return statusOptions[statusIndex] === 'online';
+              }).length}
             </span>
           </div>
         </div>
