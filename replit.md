@@ -65,6 +65,8 @@ Business goal: Focus on completely free Google-first architecture with optional 
 
 **DEVELOPMENT HTTP FALLBACK IMPLEMENTED (August 20, 2025)**: Environment-based OAuth credential selection now active. Development mode uses HTTP-compatible OAuth (current setup), production mode will use HTTPS-only OAuth credentials when deployed.
 
+**GMAIL SCOPE VERIFICATION FIX (August 20, 2025)**: Fixed Gmail scope check to verify scope string directly instead of API call, eliminating false negatives. OAuth flow and email sending confirmed working in development mode.
+
 ## System Architecture
 
 ### Frontend Architecture

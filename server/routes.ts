@@ -41,25 +41,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         console.log('Checking Gmail scope for token:', req.session.googleTokens.access_token.substring(0, 20) + '...');
         
-        // Verify token has Gmail scope by making a simple test call
-        const response = await fetch('https://www.googleapis.com/gmail/v1/users/me/profile', {
-          headers: {
-            'Authorization': `Bearer ${req.session.googleTokens.access_token}`
-          }
-        });
+        // Check if Gmail scope is present in token scope instead of API call
+        const tokenScopes = req.session.googleTokens.scope || '';
+        hasGmailScope = tokenScopes.includes('https://www.googleapis.com/auth/gmail.send');
         
-        console.log('Gmail scope check response:', { 
-          status: response.status, 
-          ok: response.ok,
-          statusText: response.statusText
-        });
-        
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.log('Gmail scope check error response:', errorText);
-        }
-        
-        hasGmailScope = response.ok;
+        console.log('Gmail scope check - Token scopes:', tokenScopes);
+        console.log('Gmail scope check - Has Gmail send scope:', hasGmailScope);
       } catch (error) {
         console.log('Gmail scope check failed:', error);
         hasGmailScope = false;

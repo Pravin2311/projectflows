@@ -44,7 +44,19 @@ function Router() {
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/project/:id" component={ProjectPage} />
           <Route path="/pricing" component={Pricing} />
-          <Route path="/checkout" component={Checkout} />
+          <Route path="/checkout">
+            {process.env.NODE_ENV === 'development' ? (
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center p-8">
+                  <h1 className="text-2xl font-bold text-gray-900 mb-4">Checkout (Development)</h1>
+                  <p className="text-gray-600 mb-4">Checkout functionality requires Stripe configuration.</p>
+                  <p className="text-sm text-gray-500">This feature will be available when Stripe keys are configured.</p>
+                </div>
+              </div>
+            ) : (
+              <Checkout />
+            )}
+          </Route>
           {/* Add more authenticated routes here */}
         </>
       )}
