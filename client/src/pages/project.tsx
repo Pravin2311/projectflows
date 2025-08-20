@@ -511,7 +511,7 @@ export default function ProjectPage() {
             </div>
             <div className="flex items-center">
               <Users className="h-4 w-4 mr-1" />
-              {project.memberEmails?.length || 0} members
+              {project.memberEmails?.length || 1} members
             </div>
             <div className="flex items-center">
               <Cloud className="h-4 w-4 mr-1" />

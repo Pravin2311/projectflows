@@ -33,7 +33,7 @@ export interface IStorage {
   
   // Project member operations
   addProjectMember(member: InsertProjectMember): Promise<ProjectMember>;
-  getProjectMembers(projectId: string): Promise<(ProjectMember & { user: User })[]>;
+  getProjectMembers(projectId: string): Promise<(ProjectMember & { user?: User })[]>;
   removeProjectMember(projectId: string, userId: string): Promise<void>;
   getUserProjectRole(projectId: string, userId: string): Promise<ProjectMember | undefined>;
   
@@ -218,14 +218,14 @@ export class MemStorage implements IStorage {
     return member;
   }
 
-  async getProjectMembers(projectId: string): Promise<(ProjectMember & { user: User })[]> {
+  async getProjectMembers(projectId: string): Promise<(ProjectMember & { user?: User })[]> {
     const members = Array.from(this.projectMembers.values())
       .filter(member => member.projectId === projectId);
     
     return members.map(member => ({
       ...member,
-      user: this.users.get(member.userId)!,
-    })).filter(member => member.user);
+      user: this.users.get(member.userId),
+    }));
   }
 
   async removeProjectMember(projectId: string, userId: string): Promise<void> {
