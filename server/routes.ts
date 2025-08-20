@@ -620,6 +620,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await emailService.sendInvitationEmail({
             to: email,
             projectName: project?.name || 'Project',
+            projectId: projectId,
             inviterName: req.session.user?.firstName || req.session.user?.email || 'Team Member',
             role: role,
             inviteLink: inviteLink

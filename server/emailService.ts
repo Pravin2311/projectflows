@@ -12,12 +12,14 @@ export class GoogleEmailService {
   async sendInvitationEmail({
     to,
     projectName,
+    projectId,
     inviterName,
     role,
     inviteLink
   }: {
     to: string;
     projectName: string;
+    projectId?: string;
     inviterName: string;
     role: string;
     inviteLink: string;
@@ -36,6 +38,7 @@ export class GoogleEmailService {
           <h3 style="margin-top: 0;">Project: ${projectName}</h3>
           <p><strong>Role:</strong> ${role}</p>
           <p><strong>Invited by:</strong> ${inviterName}</p>
+          ${projectId ? `<p><strong>Project ID:</strong> <code style="background: #e5e7eb; padding: 2px 6px; border-radius: 4px; font-family: monospace;">${projectId}</code></p>` : ''}
         </div>
         
         <p>ProjectFlow is a completely free project management platform that stores all your data in your own Google Drive. You maintain full control and ownership of your project data.</p>
@@ -48,6 +51,18 @@ export class GoogleEmailService {
         
         <p><small>If you can't click the button above, copy and paste this link into your browser:<br>
         ${inviteLink}</small></p>
+        
+        ${projectId ? `
+        <div style="background: #fef3c7; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+          <p style="margin: 0; font-size: 14px;"><strong>Alternative Access:</strong></p>
+          <p style="margin: 5px 0 0 0; font-size: 14px;">If you can't access the invitation link, you can also join the project by:</p>
+          <ol style="margin: 5px 0 0 0; font-size: 14px; padding-left: 20px;">
+            <li>Go to the ProjectFlow homepage</li>
+            <li>Click "Member Login"</li>
+            <li>Enter Project ID: <strong>${projectId}</strong></li>
+          </ol>
+        </div>
+        ` : ''}
         
         <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
         
@@ -64,6 +79,7 @@ You're invited to join "${projectName}" on ProjectFlow
 Hi there,
 
 ${inviterName} has invited you to join the project "${projectName}" as a ${role}.
+${projectId ? `Project ID: ${projectId}` : ''}
 
 ProjectFlow is a completely free project management platform that stores all your data in your own Google Drive. You maintain full control and ownership of your project data.
 
@@ -71,7 +87,13 @@ Accept your invitation here: ${inviteLink}
 
 If you can't click the link above, copy and paste it into your browser.
 
-This invitation was sent from ProjectFlow, a free Google-powered project management platform.
+${projectId ? `Alternative Access:
+If you can't access the invitation link, you can also join the project by:
+1. Go to the ProjectFlow homepage
+2. Click "Member Login" 
+3. Enter Project ID: ${projectId}
+
+` : ''}This invitation was sent from ProjectFlow, a free Google-powered project management platform.
 Your data stays in your Google Drive - we never store or access your project information.
     `;
 
