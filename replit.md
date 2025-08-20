@@ -6,6 +6,13 @@ This is a completely free project management platform built with React and Expre
 
 ## Recent Changes (August 20, 2025)
 
+### Gmail API Email Invitations
+- **Real Email Sending**: Complete Google Gmail API integration for sending actual email invitations
+- **Professional Templates**: Beautiful HTML email templates with project branding and invitation details
+- **Smart Authorization**: Automatic Gmail scope detection with one-click reauthorization button
+- **Universal Compatibility**: Sends to ANY email address (Gmail, Yahoo, corporate, all providers)
+- **Google-First Architecture**: Uses user's Google account to send emails, maintaining free platform approach
+
 ### Advanced Time Tracking Implementation
 - **Time Tracker Component**: Built comprehensive time tracking with start/stop timer, manual entry, and progress slider
 - **Visual Progress Tracking**: Color-coded completion indicators with automatic status-based updates
@@ -22,7 +29,7 @@ This is a completely free project management platform built with React and Expre
 ### Team Collaboration Features
 - **Invite Team Members**: Added "Invite Team" button in project header for easy member invitations
 - **Role-Based Access**: Support for member and admin roles with appropriate permissions
-- **Email Invitations**: Simple email-based invitation system with role selection
+- **Gmail-Powered Invitations**: Real email invitations sent via Google Gmail API with automatic fallback
 - **Team Management**: Project member count display and access control
 
 ### Google-First Data Architecture

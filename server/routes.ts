@@ -42,23 +42,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Re-authorize Gmail endpoint
-  app.post('/api/auth/reauthorize-gmail', (req: any, res) => {
+  // Re-authorize Gmail endpoint - simplified approach
+  app.post('/api/auth/reauthorize-gmail', async (req: any, res) => {
     if (!req.session?.googleConfig) {
       return res.status(401).json({ error: 'No Google config found' });
     }
 
     try {
-      const { apiKey, clientId, clientSecret } = req.session.googleConfig;
+      const { clientId } = req.session.googleConfig;
       
-      // Import GoogleAuthService here to avoid circular imports
-      const { GoogleAuthService } = require('./googleAuth');
-      const authService = new GoogleAuthService({ apiKey, clientId, clientSecret });
-      const authUrl = authService.getAuthUrl(`${req.protocol}://${req.get('host')}/api/auth/callback`);
+      // Create OAuth URL directly without importing GoogleAuthService
+      const scopes = [
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/drive',
+        'https://www.googleapis.com/auth/drive.file',
+        'https://www.googleapis.com/auth/gmail.send'
+      ].join(' ');
+      
+      const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/callback`;
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${encodeURIComponent(clientId)}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&scope=${encodeURIComponent(scopes)}` +
+        `&response_type=code` +
+        `&access_type=offline` +
+        `&prompt=consent`;
       
       res.json({ authUrl });
     } catch (error) {
-      res.status(400).json({ error: 'Failed to generate reauth URL' });
+      console.error('Gmail reauth error:', error);
+      res.status(400).json({ error: 'Failed to generate reauth URL: ' + error });
     }
   });
 

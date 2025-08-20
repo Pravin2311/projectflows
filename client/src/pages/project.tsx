@@ -377,7 +377,7 @@ export default function ProjectPage() {
             
             <div className="flex items-center space-x-2">
               {/* Gmail Status & Reauthorization */}
-              {authStatus && !(authStatus as any).hasGmailScope && (
+              {authStatus && !(authStatus as any)?.hasGmailScope && (
                 <Button
                   variant="outline"
                   size="sm"
