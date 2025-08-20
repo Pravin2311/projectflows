@@ -68,13 +68,13 @@ export default function InvitePage() {
       if (response.ok) {
         toast({
           title: "Invitation Accepted!",
-          description: `You've joined the project "${invitation.projectName}".`,
+          description: `You've joined the project "${invitation.projectName}". Please sign in to access the project.`,
         });
         
-        // Redirect to the project page
+        // Redirect to home page to sign in since user likely isn't authenticated
         setTimeout(() => {
-          setLocation(`/project/${invitation.projectId}`);
-        }, 2000);
+          setLocation(`/`);
+        }, 3000);
       } else {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to accept invitation");
@@ -222,7 +222,7 @@ export default function InvitePage() {
                   Accepting Invitation...
                 </>
               ) : (
-                'Accept Invitation'
+                'Accept Invitation & Get Started'
               )}
             </Button>
             
@@ -232,16 +232,19 @@ export default function InvitePage() {
               className="w-full"
               data-testid="button-decline-invitation"
             >
-              Decline
+              Maybe Later
             </Button>
           </div>
 
           <div className="text-center">
             <p className="text-xs text-gray-500">
-              By accepting, you'll join this project and can collaborate with your team.
-              All project data stays in your team's Google Drive.
+              <strong>New to ProjectFlow?</strong><br/>
+              After accepting, you'll be redirected to sign in with Google.<br/>
+              Your data stays in your Google Drive - completely free forever.
             </p>
           </div>
+
+
         </CardContent>
       </Card>
     </div>
