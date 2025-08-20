@@ -1,5 +1,5 @@
-// Simplified Google OAuth using direct OAuth flow
-// Works around Google API initialization issues by using direct OAuth URLs
+// Universal Google OAuth using Google Identity Services
+// Works on any domain without manual redirect URI configuration
 
 interface GoogleUser {
   access_token: string;
@@ -9,120 +9,119 @@ interface GoogleUser {
   expires_in: number;
 }
 
-export class SimpleGoogleAuth {
+declare global {
+  interface Window {
+    google: {
+      accounts: {
+        oauth2: {
+          initCodeClient: (config: any) => any;
+        };
+      };
+    };
+  }
+}
+
+export class UniversalGoogleAuth {
   private clientId: string;
   private scopes: string[];
+  private codeClient: any = null;
 
   constructor(clientId: string, scopes: string[]) {
     this.clientId = clientId;
     this.scopes = scopes;
   }
 
+  private async loadGoogleIdentityServices(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (window.google?.accounts?.oauth2) {
+        resolve();
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.onload = () => {
+        // Wait a moment for the Google object to be fully initialized
+        setTimeout(() => {
+          if (window.google?.accounts?.oauth2) {
+            resolve();
+          } else {
+            reject(new Error('Google Identity Services failed to load'));
+          }
+        }, 100);
+      };
+      script.onerror = () => reject(new Error('Failed to load Google Identity Services'));
+      document.head.appendChild(script);
+    });
+  }
+
   async signInWithPopup(): Promise<GoogleUser> {
-    console.log('Starting direct OAuth flow with scopes:', this.scopes);
+    console.log('Starting Google Identity Services OAuth with scopes:', this.scopes);
     
     if (!this.clientId) {
       throw new Error('Google Client ID not provided');
     }
 
+    await this.loadGoogleIdentityServices();
+
     return new Promise((resolve, reject) => {
-      // Create OAuth URL with proper redirect URI
-      const redirectUri = `${window.location.origin}/oauth-handler.html`;
-      const params = new URLSearchParams({
-        client_id: this.clientId,
-        redirect_uri: redirectUri,
-        scope: this.scopes.join(' '),
-        response_type: 'code',
-        access_type: 'offline',
-        prompt: 'consent',
-        include_granted_scopes: 'true'
-      });
-
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
-      console.log('Opening OAuth popup with URL:', authUrl);
-
-      // Open popup window
-      const popup = window.open(
-        authUrl,
-        'google-oauth',
-        'width=500,height=600,scrollbars=yes,resizable=yes'
-      );
-
-      if (!popup) {
-        reject(new Error('Popup blocked by browser. Please enable popups and try again.'));
-        return;
-      }
-
-      // Listen for messages from popup
-      const messageListener = async (event: MessageEvent) => {
-        // Accept messages from our own domain (OAuth handler page)
-        if (event.origin !== window.location.origin) {
-          return;
-        }
-
-        console.log('Received message from OAuth popup:', event.data);
-
-        if (event.data && typeof event.data === 'object') {
-          window.removeEventListener('message', messageListener);
-          
-          if (event.data.error) {
-            popup.close();
-            reject(new Error(`OAuth failed: ${event.data.error}`));
-            return;
-          }
-
-          if (event.data.code) {
-            popup.close();
+      try {
+        // Initialize the code client
+        this.codeClient = window.google.accounts.oauth2.initCodeClient({
+          client_id: this.clientId,
+          scope: this.scopes.join(' '),
+          ux_mode: 'popup',
+          callback: async (response: any) => {
+            console.log('Google OAuth response:', response);
             
-            try {
-              // Exchange code for tokens using our backend
-              const response = await fetch('/api/auth/exchange-oauth-code', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: event.data.code }),
-                credentials: 'include'
-              });
-
-              if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Token exchange failed: ${errorText}`);
-              }
-
-              const tokens = await response.json();
-              console.log('Successfully exchanged code for tokens');
-              
-              resolve({
-                access_token: tokens.access_token,
-                refresh_token: tokens.refresh_token,
-                scope: tokens.scope,
-                token_type: tokens.token_type || 'Bearer',
-                expires_in: tokens.expires_in
-              });
-            } catch (error: any) {
-              console.error('Token exchange failed:', error);
-              reject(new Error(`Token exchange failed: ${error.message}`));
+            if (response.error) {
+              reject(new Error(`OAuth failed: ${response.error}`));
+              return;
             }
-            return;
-          }
-        }
-      };
 
-      window.addEventListener('message', messageListener);
+            if (response.code) {
+              try {
+                // Exchange code for tokens using our backend
+                const tokenResponse = await fetch('/api/auth/exchange-oauth-code', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ code: response.code }),
+                  credentials: 'include'
+                });
 
-      // Check if popup was closed manually
-      const checkClosed = setInterval(() => {
-        if (popup.closed) {
-          clearInterval(checkClosed);
-          window.removeEventListener('message', messageListener);
-          reject(new Error('OAuth popup was closed by user'));
-        }
-      }, 1000);
+                if (!tokenResponse.ok) {
+                  const errorText = await tokenResponse.text();
+                  throw new Error(`Token exchange failed: ${errorText}`);
+                }
+
+                const tokens = await tokenResponse.json();
+                console.log('Successfully exchanged code for tokens');
+                
+                resolve({
+                  access_token: tokens.access_token,
+                  refresh_token: tokens.refresh_token,
+                  scope: tokens.scope,
+                  token_type: tokens.token_type || 'Bearer',
+                  expires_in: tokens.expires_in
+                });
+              } catch (error: any) {
+                console.error('Token exchange failed:', error);
+                reject(new Error(`Token exchange failed: ${error.message}`));
+              }
+            }
+          },
+        });
+
+        // Request the authorization code
+        this.codeClient.requestCode();
+      } catch (error: any) {
+        console.error('Google OAuth initialization failed:', error);
+        reject(new Error(`Google OAuth failed: ${error.message}`));
+      }
     });
   }
 
   async getExistingToken(): Promise<GoogleUser | null> {
-    // For the direct OAuth flow, we'll rely on server-side session tokens
-    // This method can be used to check if user has existing valid tokens
     try {
       const response = await fetch('/api/auth/check-google-tokens', {
         credentials: 'include'
@@ -151,5 +150,5 @@ export const createGoogleAuth = (clientId: string) => {
     'https://www.googleapis.com/auth/gmail.send'
   ];
   
-  return new SimpleGoogleAuth(clientId, scopes);
+  return new UniversalGoogleAuth(clientId, scopes);
 };

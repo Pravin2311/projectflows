@@ -102,7 +102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           client_secret: clientSecret,
           code: code,
           grant_type: 'authorization_code',
-          redirect_uri: `${req.protocol}://${req.get('host')}/oauth-handler.html`, // Must match the redirect_uri used in authorization
+          redirect_uri: 'postmessage', // Must match the redirect_uri used in authorization
         }),
       });
 
