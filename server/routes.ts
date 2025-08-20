@@ -33,11 +33,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }));
 
   // Simple auth routes for development
-  app.get('/api/auth/status', (req: any, res) => {
+  app.get('/api/auth/status', async (req: any, res) => {
+    let hasGmailScope = false;
+    
+    // Check if we have access token and verify Gmail scope
+    if (req.session?.googleTokens?.access_token) {
+      try {
+        // Verify token has Gmail scope by making a simple test call
+        const response = await fetch('https://www.googleapis.com/gmail/v1/users/me/profile', {
+          headers: {
+            'Authorization': `Bearer ${req.session.googleTokens.access_token}`
+          }
+        });
+        hasGmailScope = response.ok;
+      } catch (error) {
+        console.log('Gmail scope check failed:', error);
+        hasGmailScope = false;
+      }
+    }
+    
     res.json({
       isAuthenticated: !!req.session?.user,
       hasGoogleConfig: !!req.session?.googleConfig,
-      hasGmailScope: !!req.session?.googleTokens?.access_token,
+      hasGmailScope,
       user: req.session?.user || null
     });
   });
