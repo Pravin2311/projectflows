@@ -86,7 +86,6 @@ export default function ProjectPage() {
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const [newComment, setNewComment] = useState("");
-  const [comments, setComments] = useState<any[]>([]);
 
   // Fetch project details
   const { data: project, isLoading: projectLoading } = useQuery<Project>({
@@ -98,6 +97,12 @@ export default function ProjectPage() {
   const { data: tasks = [], isLoading: tasksLoading } = useQuery<Task[]>({
     queryKey: [`/api/projects/${projectId}/tasks`],
     enabled: !!projectId,
+  });
+
+  // Fetch comments for selected task
+  const { data: comments = [], isLoading: commentsLoading, refetch: refetchComments } = useQuery<any[]>({
+    queryKey: [`/api/tasks/${selectedTask?.id}/comments`],
+    enabled: !!selectedTask?.id,
   });
 
   // Create task mutation
@@ -165,7 +170,7 @@ export default function ProjectPage() {
     }
     
     // Prepare task data with proper formatting
-    const taskData = {
+    const taskData: any = {
       ...taskForm,
       dueDate: taskForm.dueDate || undefined,
       startDate: taskForm.startDate || undefined,
@@ -183,46 +188,39 @@ export default function ProjectPage() {
     updateTaskMutation.mutate({ taskId, updates: { status } });
   };
 
-  const handleTaskClick = async (task: Task) => {
+  const handleTaskClick = (task: Task) => {
     setSelectedTask(task);
     setIsTaskDetailOpen(true);
-    // Load comments for this task
-    try {
-      const response = await apiRequest("GET", `/api/tasks/${task.id}/comments`);
-      setComments(response || []);
-    } catch (error) {
-      console.error("Failed to load comments:", error);
-      setComments([]);
-    }
+    // Comments will be automatically loaded by React Query when selectedTask changes
   };
 
-  const handleAddComment = async () => {
-    if (!newComment.trim() || !selectedTask) return;
-    
-    try {
-      const comment = await apiRequest("POST", `/api/tasks/${selectedTask.id}/comments`, {
-        content: newComment.trim()
-      });
-      
-      console.log("Comment created:", comment);
-      
-      // Reload comments to get the latest data with author info
-      const updatedComments = await apiRequest("GET", `/api/tasks/${selectedTask.id}/comments`);
-      setComments(updatedComments || []);
+  // Add comment mutation
+  const addCommentMutation = useMutation({
+    mutationFn: async (content: string) => {
+      if (!selectedTask) throw new Error("No task selected");
+      return await apiRequest("POST", `/api/tasks/${selectedTask.id}/comments`, { content });
+    },
+    onSuccess: () => {
+      refetchComments(); // Refetch comments after successful creation
       setNewComment("");
-      
       toast({
         title: "Comment added",
         description: "Your comment has been added to the task.",
       });
-    } catch (error) {
+    },
+    onError: (error: Error) => {
       console.error("Failed to add comment:", error);
       toast({
         title: "Error",
         description: "Failed to add comment.",
         variant: "destructive",
       });
-    }
+    },
+  });
+
+  const handleAddComment = () => {
+    if (!newComment.trim()) return;
+    addCommentMutation.mutate(newComment.trim());
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -907,10 +905,10 @@ export default function ProjectPage() {
                       size="sm" 
                       className="mt-2" 
                       onClick={handleAddComment}
-                      disabled={!newComment.trim()}
+                      disabled={addCommentMutation.isPending || !newComment.trim()}
                       data-testid="button-add-comment"
                     >
-                      Add Comment
+                      {addCommentMutation.isPending ? "Adding..." : "Add Comment"}
                     </Button>
                   </div>
                 </div>
