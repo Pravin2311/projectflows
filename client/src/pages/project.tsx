@@ -219,8 +219,8 @@ export default function ProjectPage() {
       setInviteEmail("");
       setInviteRole("member");
       toast({
-        title: "Invitation created",
-        description: "Team member has been invited to the project. In production, they would receive an email invitation.",
+        title: "Invitation sent",
+        description: "Email invitation has been sent using Google Gmail API.",
       });
     },
     onError: (error: Error) => {

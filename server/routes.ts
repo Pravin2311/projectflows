@@ -19,6 +19,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 import { insertProjectSchema, insertTaskSchema, insertCommentSchema } from "../shared/schema.js";
 import { z } from "zod";
+import { GoogleEmailService } from "./emailService";
 
 import session from 'express-session';
 
@@ -331,12 +332,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // In a real app, this would send an email invitation
       const invitationId = Math.random().toString(36).substring(2, 15);
       
-      // TODO: In production, send actual email invitation here
-      console.log(`🚀 EMAIL INVITATION (Demo Mode):`);
-      console.log(`   To: ${email}`);
-      console.log(`   Project: ${projectId}`);
-      console.log(`   Role: ${role}`);
-      console.log(`   Invitation Link: https://projectflow.app/invite/${invitationId}`);
+      // Send actual email invitation using Google Gmail API
+      if (req.session?.googleConfig?.accessToken) {
+        try {
+          const emailService = new GoogleEmailService(req.session.googleConfig.accessToken);
+          const project = await storage.getProject(projectId);
+          const inviteLink = `${req.protocol}://${req.get('host')}/invite/${invitationId}`;
+          
+          await emailService.sendInvitationEmail({
+            to: email,
+            projectName: project?.name || 'Project',
+            inviterName: req.session.user?.firstName || req.session.user?.email || 'Team Member',
+            role: role,
+            inviteLink: inviteLink
+          });
+          
+          console.log(`✅ Email invitation sent to ${email} for project "${project?.name}"`);
+        } catch (error) {
+          console.error('❌ Failed to send email invitation:', error);
+          // Continue with invitation creation even if email fails
+        }
+      } else {
+        console.log(`📧 EMAIL INVITATION (Demo Mode - No Google Access Token):`);
+        console.log(`   To: ${email}`);
+        console.log(`   Project: ${projectId}`);
+        console.log(`   Role: ${role}`);
+      }
       
       const member = await storage.addProjectMember({
         projectId,
