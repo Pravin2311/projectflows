@@ -152,7 +152,7 @@ export function setupGoogleAuth(app: Express) {
   });
 
   // Get current user route
-  app.get('/api/auth/user', isAuthenticated as any, (req: AuthenticatedRequest, res) => {
+  app.get('/api/auth/user', isAuthenticated as any, (req: any, res) => {
     res.json(req.user);
   });
 

@@ -94,6 +94,28 @@ export default function ProjectPage() {
   const [attachments, setAttachments] = useState<File[]>([]);
   const [newComment, setNewComment] = useState("");
 
+  // Fetch auth status for Gmail capability
+  const { data: authStatus } = useQuery({
+    queryKey: ['/api/auth/status'],
+  });
+
+  // Gmail reauthorization mutation
+  const reauthorizeGmailMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/auth/reauthorize-gmail");
+    },
+    onSuccess: (data) => {
+      window.location.href = data.authUrl;
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: "Failed to initialize Gmail authorization.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Fetch project details
   const { data: project, isLoading: projectLoading } = useQuery<Project>({
     queryKey: [`/api/projects/${projectId}`],
@@ -353,6 +375,21 @@ export default function ProjectPage() {
             </div>
             
             <div className="flex items-center space-x-2">
+              {/* Gmail Status & Reauthorization */}
+              {authStatus && !authStatus.hasGmailScope && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => reauthorizeGmailMutation.mutate()}
+                  disabled={reauthorizeGmailMutation.isPending}
+                  className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                  data-testid="button-reauth-gmail"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Enable Email Invites
+                </Button>
+              )}
+              
               {/* Invite Team Member Button */}
               <Dialog open={isInviteMemberOpen} onOpenChange={setIsInviteMemberOpen}>
                 <DialogTrigger asChild>

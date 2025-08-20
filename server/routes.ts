@@ -37,8 +37,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({
       isAuthenticated: !!req.session?.user,
       hasGoogleConfig: !!req.session?.googleConfig,
+      hasGmailScope: !!req.session?.googleTokens?.access_token,
       user: req.session?.user || null
     });
+  });
+
+  // Re-authorize Gmail endpoint
+  app.post('/api/auth/reauthorize-gmail', (req: any, res) => {
+    if (!req.session?.googleConfig) {
+      return res.status(401).json({ error: 'No Google config found' });
+    }
+
+    try {
+      const { apiKey, clientId, clientSecret } = req.session.googleConfig;
+      
+      // Import GoogleAuthService here to avoid circular imports
+      const { GoogleAuthService } = require('./googleAuth');
+      const authService = new GoogleAuthService({ apiKey, clientId, clientSecret });
+      const authUrl = authService.getAuthUrl(`${req.protocol}://${req.get('host')}/api/auth/callback`);
+      
+      res.json({ authUrl });
+    } catch (error) {
+      res.status(400).json({ error: 'Failed to generate reauth URL' });
+    }
   });
 
   // Login routes - support both /api/login and /api/auth/login for compatibility
@@ -333,9 +354,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const invitationId = Math.random().toString(36).substring(2, 15);
       
       // Send actual email invitation using Google Gmail API
-      if (req.session?.googleConfig?.accessToken) {
+      if (req.session?.googleTokens?.access_token) {
         try {
-          const emailService = new GoogleEmailService(req.session.googleConfig.accessToken);
+          const emailService = new GoogleEmailService(req.session.googleTokens.access_token);
           const project = await storage.getProject(projectId);
           const inviteLink = `${req.protocol}://${req.get('host')}/invite/${invitationId}`;
           
@@ -353,10 +374,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Continue with invitation creation even if email fails
         }
       } else {
-        console.log(`📧 EMAIL INVITATION (Demo Mode - No Google Access Token):`);
+        console.log(`📧 EMAIL INVITATION (Demo Mode - Gmail permissions needed):`);
         console.log(`   To: ${email}`);
         console.log(`   Project: ${projectId}`);
         console.log(`   Role: ${role}`);
+        console.log(`   💡 Tip: Use "Re-authorize Gmail" button to enable real email sending`);
       }
       
       const member = await storage.addProjectMember({
