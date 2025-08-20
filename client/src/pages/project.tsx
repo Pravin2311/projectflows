@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -72,6 +72,27 @@ export default function ProjectPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Redirect to dashboard if no project ID or if it's undefined
+  useEffect(() => {
+    if (!projectId || projectId === 'undefined') {
+      console.log('Invalid project ID detected, redirecting to dashboard:', projectId);
+      window.location.href = '/dashboard';
+      return;
+    }
+  }, [projectId]);
+
+  // Early return if no valid project ID
+  if (!projectId || projectId === 'undefined') {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold text-gray-900">Redirecting...</h2>
+          <p className="text-gray-600 mt-2">Taking you back to the dashboard</p>
+        </div>
+      </div>
+    );
+  }
   const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
   const [isInviteMemberOpen, setIsInviteMemberOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -103,8 +124,10 @@ export default function ProjectPage() {
   // Gmail reauthorization mutation
   const reauthorizeGmailMutation = useMutation({
     mutationFn: async () => {
+      // Only use project-specific return URL if we have a valid project ID
+      const returnUrl = projectId && projectId !== 'undefined' ? `/project/${projectId}` : '/dashboard';
       return await apiRequest("POST", "/api/auth/reauthorize-gmail", {
-        returnUrl: window.location.pathname
+        returnUrl
       });
     },
     onSuccess: (data: any) => {
