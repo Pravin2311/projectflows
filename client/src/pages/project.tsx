@@ -157,7 +157,7 @@ export default function ProjectPage() {
     onSuccess: (data: any) => {
       console.log('Gmail authorization complete:', data);
       toast({
-        title: "Gmail Enabled",
+        title: "Gmail connected successfully!",
         description: "You can now send email invitations to team members.",
       });
       // Refresh auth status to update UI
@@ -165,9 +165,23 @@ export default function ProjectPage() {
     },
     onError: (error: Error) => {
       console.error('Gmail authorization error:', error);
+      
+      // Don't show error toast if user simply cancelled the popup
+      if (error.message.includes('cancelled') || error.message.includes('closed')) {
+        return;
+      }
+      
+      // Show user-friendly error messages
+      let errorMessage = error.message;
+      if (error.message.includes('Popup blocked')) {
+        errorMessage = 'Please enable popups for this site and try again.';
+      } else if (error.message.includes('timed out')) {
+        errorMessage = 'Connection timed out. Please try again.';
+      }
+      
       toast({
-        title: "Error",
-        description: `Failed to initialize Gmail authorization: ${error.message}`,
+        title: "Gmail connection failed",
+        description: errorMessage,
         variant: "destructive",
       });
     },

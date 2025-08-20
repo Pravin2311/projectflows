@@ -87,7 +87,7 @@ export class PlatformManagedAuth {
         if (popup.closed) {
           clearInterval(checkClosed);
           window.removeEventListener('message', messageListener);
-          reject(new Error('OAuth popup was closed'));
+          reject(new Error('Gmail connection cancelled. Click "Connect Gmail" to try again.'));
         }
       }, 1000);
     });
