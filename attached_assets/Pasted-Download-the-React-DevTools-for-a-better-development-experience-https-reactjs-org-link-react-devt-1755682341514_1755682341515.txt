@@ -1,0 +1,36 @@
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+2stripe.js:1 Uncaught (in promise) IntegrationError: Please call Stripe() with your publishable key. You used an empty string.Understand this error
+@radix-ui_react-dialog.js?v=6799eac1:1412 Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+(anonymous) @ @radix-ui_react-dialog.js?v=6799eac1:1412Understand this warning
+googleAuth.ts:38 Initializing Google API with client ID: 656494945970-g75vmhiftt8fj593747anc7gf9nervfo.apps.googleusercontent.com
+googleAuth.ts:47 Loading Google API script...
+googleAuth.ts:51 Google API script loaded, initializing auth2...
+googleAuth.ts:53 Auth2 loaded, initializing with client ID...
+cb=gapi.loaded_0?le=scs,fedcm_migration_mod:183 An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing.
+(anonymous) @ cb=gapi.loaded_0?le=scs,fedcm_migration_mod:183Understand this warning
+accounts.google.com/o/oauth2/iframe#origin=https%3A%2F%2F5b5f8299-7c4a-4f25-b4fb-278dcff8b581-00-xwv50dvel03x.kirk.replit.dev&rpcToken=462705354.2401822&supportBlocked3PCookies=1:1 [Report Only] Refused to load the script 'https://www.gstatic.com/_/mss/boq-identity/_/js/k=boq-identity.IdpIFrameHttp.en_US.3meUtTy9T10.2018.O/am=gMA/d=1/rs=AOaEmlE92vtfOG2BZKRLH2c_HPQ1VSMj8Q/m=base' because it violates the following Content Security Policy directive: "script-src 'unsafe-inline' 'unsafe-eval' blob: data:". Note that 'script-src-elem' was not explicitly set, so 'script-src' is used as a fallback.
+
+googleAuth.ts:61 Google Auth2 initialization failed: Object
+(anonymous) @ googleAuth.ts:61Understand this error
+googleAuth.ts:149 No existing Google auth found: Error: Google Auth2 initialization failed: idpiframe_initialization_failed
+    at googleAuth.ts:62:22
+    at cb=gapi.loaded_0?le=scs,fedcm_migration_mod:152:25
+    at Hk (cb=gapi.loaded_0?le=scs,fedcm_migration_mod:155:59)
+    at Dk (cb=gapi.loaded_0?le=scs,fedcm_migration_mod:154:368)
+    at Object.kA (cb=gapi.loaded_0?le=scs,fedcm_migration_mod:154:238)
+    at Yj (cb=gapi.loaded_0?le=scs,fedcm_migration_mod:145:116)
+googleAuth.ts:91 Starting popup sign-in with scopes: Array(5)
+googleAuth.ts:38 Initializing Google API with client ID: 656494945970-g75vmhiftt8fj593747anc7gf9nervfo.apps.googleusercontent.com
+googleAuth.ts:72 Google API already loaded, initializing auth2...
+googleAuth.ts:74 Auth2 loaded, initializing with client ID...
+googleAuth.ts:82 Google Auth2 initialization failed: Object
+(anonymous) @ googleAuth.ts:82Understand this error
+project.tsx:167 Gmail authorization error: Error: Google Auth2 initialization failed: idpiframe_initialization_failed
+    at googleAuth.ts:83:20
+    at cb=gapi.loaded_0?le=scs,fedcm_migration_mod:152:25
+    at Hk (cb=gapi.loaded_0?le=scs,fedcm_migration_mod:155:59)
+    at Dk (cb=gapi.loaded_0?le=scs,fedcm_migration_mod:154:368)
+    at Object.kA (cb=gapi.loaded_0?le=scs,fedcm_migration_mod:154:238)
+    at Yj (cb=gapi.loaded_0?le=scs,fedcm_migration_mod:145:116)
+onError @ project.tsx:167Understand this error
+accounts.google.com/_/IdpIFrameHttp/cspreport/fine-allowlist:1  Failed to load resource: the server responded with a status of 400 ()

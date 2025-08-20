@@ -1,5 +1,5 @@
-// Universal Google OAuth that works on any domain
-// Uses popup-based flow to avoid redirect URI configuration issues
+// Simplified Google OAuth using direct OAuth flow
+// Works around Google API initialization issues by using direct OAuth URLs
 
 interface GoogleUser {
   access_token: string;
@@ -9,144 +9,127 @@ interface GoogleUser {
   expires_in: number;
 }
 
-declare global {
-  interface Window {
-    gapi: {
-      load: (api: string, callback: () => void) => void;
-      auth2: {
-        init: (config: any) => Promise<any>;
-        getAuthInstance: () => any;
-      };
-    };
-  }
-}
-
-export class UniversalGoogleAuth {
+export class SimpleGoogleAuth {
   private clientId: string;
   private scopes: string[];
-  private initiated = false;
 
   constructor(clientId: string, scopes: string[]) {
     this.clientId = clientId;
     this.scopes = scopes;
   }
 
-  async initGoogleAPI(): Promise<void> {
-    if (this.initiated) return;
+  async signInWithPopup(): Promise<GoogleUser> {
+    console.log('Starting direct OAuth flow with scopes:', this.scopes);
+    
+    if (!this.clientId) {
+      throw new Error('Google Client ID not provided');
+    }
 
     return new Promise((resolve, reject) => {
-      console.log('Initializing Google API with client ID:', this.clientId);
-      
-      if (!this.clientId) {
-        reject(new Error('Google Client ID not provided'));
+      // Create OAuth URL directly
+      const params = new URLSearchParams({
+        client_id: this.clientId,
+        redirect_uri: 'postmessage', // Uses postmessage for popup flow
+        scope: this.scopes.join(' '),
+        response_type: 'code',
+        access_type: 'offline',
+        prompt: 'consent',
+        include_granted_scopes: 'false'
+      });
+
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+      console.log('Opening OAuth popup with URL:', authUrl);
+
+      // Open popup window
+      const popup = window.open(
+        authUrl,
+        'google-oauth',
+        'width=500,height=600,scrollbars=yes,resizable=yes'
+      );
+
+      if (!popup) {
+        reject(new Error('Popup blocked by browser. Please enable popups and try again.'));
         return;
       }
 
-      // Load Google API script
-      if (!window.gapi) {
-        console.log('Loading Google API script...');
-        const script = document.createElement('script');
-        script.src = 'https://apis.google.com/js/api.js';
-        script.onload = () => {
-          console.log('Google API script loaded, initializing auth2...');
-          window.gapi.load('auth2', () => {
-            console.log('Auth2 loaded, initializing with client ID...');
-            window.gapi.auth2.init({
-              client_id: this.clientId,
-            }).then(() => {
-              console.log('Google Auth2 initialized successfully');
-              this.initiated = true;
-              resolve();
-            }).catch((error: any) => {
-              console.error('Google Auth2 initialization failed:', error);
-              reject(new Error(`Google Auth2 initialization failed: ${error.error || error.message || String(error)}`));
+      // Listen for messages from popup
+      const messageListener = async (event: MessageEvent) => {
+        if (event.origin !== 'https://accounts.google.com') {
+          return;
+        }
+
+        console.log('Received message from OAuth popup:', event.data);
+
+        if (event.data.error) {
+          window.removeEventListener('message', messageListener);
+          popup.close();
+          reject(new Error(`OAuth failed: ${event.data.error}`));
+          return;
+        }
+
+        if (event.data.code) {
+          window.removeEventListener('message', messageListener);
+          popup.close();
+          
+          try {
+            // Exchange code for tokens using our backend
+            const response = await fetch('/api/auth/exchange-oauth-code', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ code: event.data.code }),
+              credentials: 'include'
             });
-          });
-        };
-        script.onerror = (error) => {
-          console.error('Failed to load Google API script:', error);
-          reject(new Error('Failed to load Google API script'));
-        };
-        document.head.appendChild(script);
-      } else {
-        console.log('Google API already loaded, initializing auth2...');
-        window.gapi.load('auth2', () => {
-          console.log('Auth2 loaded, initializing with client ID...');
-          window.gapi.auth2.init({
-            client_id: this.clientId,
-          }).then(() => {
-            console.log('Google Auth2 initialized successfully');
-            this.initiated = true;
-            resolve();
-          }).catch((error: any) => {
-            console.error('Google Auth2 initialization failed:', error);
-            reject(new Error(`Google Auth2 initialization failed: ${error.error || error.message || String(error)}`));
-          });
-        });
-      }
+
+            if (!response.ok) {
+              throw new Error(`Token exchange failed: ${response.statusText}`);
+            }
+
+            const tokens = await response.json();
+            console.log('Successfully exchanged code for tokens');
+            
+            resolve({
+              access_token: tokens.access_token,
+              refresh_token: tokens.refresh_token,
+              scope: tokens.scope,
+              token_type: tokens.token_type || 'Bearer',
+              expires_in: tokens.expires_in
+            });
+          } catch (error: any) {
+            console.error('Token exchange failed:', error);
+            reject(new Error(`Token exchange failed: ${error.message}`));
+          }
+        }
+      };
+
+      window.addEventListener('message', messageListener);
+
+      // Check if popup was closed manually
+      const checkClosed = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(checkClosed);
+          window.removeEventListener('message', messageListener);
+          reject(new Error('OAuth popup was closed by user'));
+        }
+      }, 1000);
     });
   }
 
-  async signInWithPopup(): Promise<GoogleUser> {
-    console.log('Starting popup sign-in with scopes:', this.scopes);
-    await this.initGoogleAPI();
-    
-    const authInstance = window.gapi.auth2.getAuthInstance();
-    console.log('Got auth instance, attempting sign in...');
-    
-    try {
-      const googleUser = await authInstance.signIn({
-        scope: this.scopes.join(' '),
-        prompt: 'consent', // Force consent screen
-      });
-
-      console.log('Google user signed in:', googleUser);
-      const authResponse = googleUser.getAuthResponse(true);
-      console.log('Auth response:', authResponse);
-      
-      if (!authResponse.access_token) {
-        throw new Error('No access token received from Google');
-      }
-      
-      return {
-        access_token: authResponse.access_token,
-        refresh_token: authResponse.refresh_token,
-        scope: authResponse.scope,
-        token_type: authResponse.token_type || 'Bearer',
-        expires_in: authResponse.expires_in,
-      };
-    } catch (error: any) {
-      console.error('Google sign-in failed:', error);
-      throw new Error(`Google sign-in failed: ${error.error || error.message || String(error)}`);
-    }
-  }
-
   async getExistingToken(): Promise<GoogleUser | null> {
+    // For the direct OAuth flow, we'll rely on server-side session tokens
+    // This method can be used to check if user has existing valid tokens
     try {
-      await this.initGoogleAPI();
-      const authInstance = window.gapi.auth2.getAuthInstance();
-      const isSignedIn = authInstance.isSignedIn.get();
+      const response = await fetch('/api/auth/check-google-tokens', {
+        credentials: 'include'
+      });
       
-      if (isSignedIn) {
-        const googleUser = authInstance.currentUser.get();
-        const authResponse = googleUser.getAuthResponse(true);
-        
-        // Check if we have the required scopes
-        const grantedScopes = authResponse.scope.split(' ');
-        const hasAllScopes = this.scopes.every(scope => grantedScopes.includes(scope));
-        
-        if (hasAllScopes) {
-          return {
-            access_token: authResponse.access_token,
-            refresh_token: authResponse.refresh_token,
-            scope: authResponse.scope,
-            token_type: authResponse.token_type || 'Bearer',
-            expires_in: authResponse.expires_in,
-          };
+      if (response.ok) {
+        const data = await response.json();
+        if (data.hasValidTokens) {
+          return data.tokens;
         }
       }
     } catch (error) {
-      console.log('No existing Google auth found:', error);
+      console.log('No existing tokens found:', error);
     }
     
     return null;
@@ -162,5 +145,5 @@ export const createGoogleAuth = (clientId: string) => {
     'https://www.googleapis.com/auth/gmail.send'
   ];
   
-  return new UniversalGoogleAuth(clientId, scopes);
+  return new SimpleGoogleAuth(clientId, scopes);
 };

@@ -75,7 +75,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Update Google token from popup OAuth (works on any domain)
+  // Exchange OAuth authorization code for access tokens
+  app.post('/api/auth/exchange-oauth-code', async (req: any, res) => {
+    if (!req.session?.googleConfig) {
+      return res.status(401).json({ error: 'No Google config found' });
+    }
+
+    try {
+      const { code } = req.body;
+      const { clientId, clientSecret } = req.session.googleConfig;
+      
+      if (!code) {
+        return res.status(400).json({ error: 'Authorization code is required' });
+      }
+      
+      console.log('Exchanging OAuth code for tokens...');
+      
+      // Exchange code for tokens
+      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          client_id: clientId,
+          client_secret: clientSecret,
+          code: code,
+          grant_type: 'authorization_code',
+          redirect_uri: 'postmessage', // Must match the redirect_uri used in authorization
+        }),
+      });
+
+      if (!tokenResponse.ok) {
+        const errorData = await tokenResponse.text();
+        console.error('Token exchange failed:', errorData);
+        return res.status(400).json({ error: 'Failed to exchange code for tokens' });
+      }
+
+      const tokens = await tokenResponse.json();
+      console.log('Successfully got tokens with scopes:', tokens.scope);
+      
+      // Store tokens in session
+      req.session.googleTokens = {
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        scope: tokens.scope,
+        expires_at: Date.now() + (tokens.expires_in * 1000),
+        token_type: tokens.token_type || 'Bearer'
+      };
+      
+      res.json(tokens);
+    } catch (error) {
+      console.error('Token exchange error:', error);
+      res.status(500).json({ error: 'Failed to exchange code for tokens' });
+    }
+  });
+
+  // Check if user has valid Google tokens
+  app.get('/api/auth/check-google-tokens', async (req: any, res) => {
+    if (!req.session?.googleTokens) {
+      return res.json({ hasValidTokens: false });
+    }
+
+    const tokens = req.session.googleTokens;
+    const now = Date.now();
+    
+    // Check if tokens are still valid (not expired)
+    if (tokens.expires_at && now > tokens.expires_at) {
+      return res.json({ hasValidTokens: false });
+    }
+
+    res.json({
+      hasValidTokens: true,
+      tokens: {
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        scope: tokens.scope,
+        token_type: tokens.token_type,
+        expires_in: Math.floor((tokens.expires_at - now) / 1000)
+      }
+    });
+  });
+
+  // Update Google token from popup OAuth (legacy endpoint for compatibility)
   app.post('/api/auth/update-google-token', async (req: any, res) => {
     if (!req.session?.googleConfig) {
       return res.status(401).json({ error: 'No Google config found' });

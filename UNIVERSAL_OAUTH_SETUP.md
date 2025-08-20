@@ -20,17 +20,19 @@ This new implementation uses **popup-based OAuth** that works on any domain with
 1. **Go to Google Cloud Console** → APIs & Services → Credentials
 2. **Create OAuth 2.0 Client ID** with these settings:
    - Application type: **Web application**
-   - Authorized redirect URIs: **Leave empty or add only localhost for testing**
+   - Authorized redirect URIs: Add `postmessage` (this special URI handles popup OAuth)
 3. **Enable APIs**: Gmail API, Google Drive API
 4. **Get credentials**: Client ID, Client Secret, API Key
 
+**Important**: The `postmessage` redirect URI is a special Google feature that enables popup-based OAuth without requiring specific domain URLs.
+
 ## How It Works
 
-- Uses Google's JavaScript API for popup-based authentication
-- No redirect URIs needed - popup handles the OAuth flow
-- Works on any domain automatically
+- Uses direct Google OAuth URLs with popup window
+- Special `postmessage` redirect URI works on any domain
+- Backend exchanges authorization code for access tokens
 - Stores tokens securely in server session
-- Fallback to existing tokens when available
+- No Google JavaScript API dependencies (avoids initialization issues)
 
 ## Technical Details
 
