@@ -39,7 +39,21 @@ function Router() {
         </>
       ) : !hasGoogleConfig ? (
         <Route path="/">
-          <GoogleConfig onConfigSubmit={submitConfig} isLoading={configLoading} />
+          <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+            <div className="max-w-4xl mx-auto p-8">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8">
+                <div className="text-center mb-8">
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                    Welcome to ProjectFlow!
+                  </h1>
+                  <p className="text-gray-600 dark:text-gray-300">
+                    Set up your Google API credentials to get started. You can add more Google services later.
+                  </p>
+                </div>
+                <GoogleConfig onConfigSubmit={submitConfig} isLoading={configLoading} />
+              </div>
+            </div>
+          </div>
         </Route>
       ) : (
         <>

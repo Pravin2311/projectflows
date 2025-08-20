@@ -150,8 +150,9 @@ export default function Dashboard() {
               </div>
               
               <Link href="/google-apps">
-                <Button variant="ghost" size="sm" title="Google Workspace">
-                  <Cloud className="h-4 w-4" />
+                <Button variant="outline" size="sm" data-testid="button-add-google-services">
+                  <Cloud className="h-4 w-4 mr-2" />
+                  Add Google Services
                 </Button>
               </Link>
               
@@ -179,7 +180,7 @@ export default function Dashboard() {
             Welcome back, {user?.firstName || "User"}!
           </h2>
           <p className="text-gray-600 dark:text-gray-300 mt-2">
-            Your projects are securely stored in your Google Drive.
+            Your projects are securely stored in your Google Drive. Need more features? Add additional Google services anytime.
           </p>
         </div>
 

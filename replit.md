@@ -6,6 +6,14 @@ This is a completely free project management platform built with React and Expre
 
 ## Recent Changes (August 20, 2025)
 
+### Simplified Onboarding with Member Login (August 20, 2025) ✅
+- **Homepage Cleanup**: Removed pricing link to maintain 100% free platform messaging
+- **Member Login Modal**: Added quick project access for team members via URL or project ID
+- **Inherited Configuration**: Team members automatically inherit project owner's Google API setup
+- **Minimal Setup Messaging**: Updated Google configuration to emphasize 2-key minimal start
+- **Progressive Enhancement**: Clear path to add more Google services after initial setup
+- **User Experience**: Streamlined login flow with member access through project URLs
+
 ### Progressive Google API Setup System Implementation (August 20, 2025) ✅
 - **New Architecture**: Users start with minimal API configuration and progressively enable additional services
 - **Modular API Selection**: Individual control over Google Docs, Sheets, Gmail, Calendar, Tasks, and Contacts APIs

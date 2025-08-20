@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { GoogleConfig } from "@/components/ui/google-config";
 import { 
   Cloud, 
@@ -18,6 +19,8 @@ import { useEffect, useState } from "react";
 
 export default function Landing() {
   const [showGoogleSetup, setShowGoogleSetup] = useState(false);
+  const [showMemberLogin, setShowMemberLogin] = useState(false);
+  const [memberLoginUrl, setMemberLoginUrl] = useState("");
 
   useEffect(() => {
     // Check URL params to see if we should show Google setup
@@ -66,6 +69,19 @@ export default function Landing() {
     }
   };
 
+  const handleMemberLogin = () => {
+    if (memberLoginUrl.trim()) {
+      // Extract project ID from URL if it's a project URL
+      const projectMatch = memberLoginUrl.match(/\/project\/([a-zA-Z0-9-_]+)/);
+      if (projectMatch) {
+        window.location.href = memberLoginUrl;
+      } else {
+        // Assume it's a project ID and construct the URL
+        window.location.href = `/project/${memberLoginUrl.trim()}`;
+      }
+    }
+  };
+
   // Add a back button handler for Google setup
   const handleBackToHome = () => {
     setShowGoogleSetup(false);
@@ -103,18 +119,18 @@ export default function Landing() {
             
             <div className="flex items-center space-x-4">
               <Button 
-                variant="ghost"
-                onClick={() => window.location.href = "/pricing"}
-                data-testid="button-pricing"
-              >
-                Pricing
-              </Button>
-              <Button 
                 onClick={handleLogin}
                 data-testid="button-login"
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 Get Started Free
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => setShowMemberLogin(!showMemberLogin)}
+                data-testid="button-member-login"
+              >
+                Member Login
               </Button>
             </div>
           </div>
@@ -173,6 +189,60 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* Member Login Modal */}
+      {showMemberLogin && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Member Login</h3>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setShowMemberLogin(false)}
+              >
+                ×
+              </Button>
+            </div>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
+              Enter your project URL or project ID to access your team project:
+            </p>
+            <div className="space-y-4">
+              <Input
+                placeholder="https://yourapp.com/project/abc123 or abc123"
+                value={memberLoginUrl}
+                onChange={(e) => setMemberLoginUrl(e.target.value)}
+                data-testid="input-member-login-url"
+              />
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowMemberLogin(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleMemberLogin}
+                  disabled={!memberLoginUrl.trim()}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  data-testid="button-member-login-submit"
+                >
+                  Access Project
+                </Button>
+              </div>
+            </div>
+            <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mb-2">
+                <strong>For team members:</strong> You'll inherit the project owner's Google API configuration automatically.
+              </p>
+              <p>
+                <strong>Need help?</strong> Ask your project owner for the project URL or ID.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Google-First Benefits */}
       <section className="py-16 bg-blue-50 dark:bg-blue-900/20">
