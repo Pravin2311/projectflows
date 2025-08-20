@@ -459,6 +459,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Comment routes
+  app.get("/api/tasks/:taskId/comments", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session.user.id;
+      const { taskId } = req.params;
+      
+      // Get the task to check project access
+      const task = await storage.getTask(taskId);
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      
+      // Check if user has access to project
+      const membership = await storage.getUserProjectRole(task.projectId, userId);
+      if (!membership) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const comments = await storage.getTaskComments(taskId);
+      res.json(comments);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      res.status(500).json({ message: "Failed to fetch comments" });
+    }
+  });
+
+  app.post("/api/tasks/:taskId/comments", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session.user.id;
+      const { taskId } = req.params;
+      const { content } = req.body;
+      
+      if (!content || !content.trim()) {
+        return res.status(400).json({ message: "Comment content is required" });
+      }
+      
+      // Get the task to check project access
+      const task = await storage.getTask(taskId);
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      
+      // Check if user has access to project
+      const membership = await storage.getUserProjectRole(task.projectId, userId);
+      if (!membership) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+      
+      const comment = await storage.createComment({
+        content: content.trim(),
+        taskId,
+        authorId: userId,
+      });
+      
+      // Create activity
+      await storage.createActivity({
+        type: "comment_added",
+        description: `Commented on task "${task.title}"`,
+        projectId: task.projectId,
+        userId,
+        entityId: taskId,
+      });
+      
+      res.json(comment);
+    } catch (error) {
+      console.error("Error creating comment:", error);
+      res.status(500).json({ message: "Failed to create comment" });
+    }
+  });
+
   // Activity routes
   app.get("/api/projects/:projectId/activities", isAuthenticated, async (req: any, res) => {
     try {

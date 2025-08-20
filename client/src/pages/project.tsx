@@ -85,6 +85,8 @@ export default function ProjectPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isTaskDetailOpen, setIsTaskDetailOpen] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [newComment, setNewComment] = useState("");
+  const [comments, setComments] = useState<any[]>([]);
 
   // Fetch project details
   const { data: project, isLoading: projectLoading } = useQuery<Project>({
@@ -181,9 +183,39 @@ export default function ProjectPage() {
     updateTaskMutation.mutate({ taskId, updates: { status } });
   };
 
-  const handleTaskClick = (task: Task) => {
+  const handleTaskClick = async (task: Task) => {
     setSelectedTask(task);
     setIsTaskDetailOpen(true);
+    // Load comments for this task
+    try {
+      const response = await apiRequest("GET", `/api/tasks/${task.id}/comments`);
+      setComments(response || []);
+    } catch (error) {
+      console.error("Failed to load comments:", error);
+      setComments([]);
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !selectedTask) return;
+    
+    try {
+      const comment = await apiRequest("POST", `/api/tasks/${selectedTask.id}/comments`, {
+        content: newComment.trim()
+      });
+      setComments([...comments, comment]);
+      setNewComment("");
+      toast({
+        title: "Comment added",
+        description: "Your comment has been added to the task.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add comment.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -827,28 +859,50 @@ export default function ProjectPage() {
               </div>
 
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Comments</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Comments ({comments.length})</h4>
                 <div className="space-y-3">
-                  <div className="max-h-40 overflow-y-auto space-y-3">
-                    <div className="border rounded-lg p-3">
-                      <div className="flex items-start space-x-3">
-                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm">
-                          {(user as any)?.firstName?.[0] || 'U'}
+                  <div className="max-h-48 overflow-y-auto space-y-3">
+                    {comments.length > 0 ? (
+                      comments.map((comment, index) => (
+                        <div key={comment.id || index} className="border rounded-lg p-3">
+                          <div className="flex items-start space-x-3">
+                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm">
+                              {comment.author?.firstName?.[0] || comment.authorId?.[0] || 'U'}
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium">
+                                {comment.author ? `${comment.author.firstName} ${comment.author.lastName}` : comment.authorId}
+                              </p>
+                              <p className="text-xs text-gray-500 mb-2">
+                                {comment.createdAt ? format(new Date(comment.createdAt), 'MMM d, yyyy h:mm a') : 'Just now'}
+                              </p>
+                              <p className="text-sm text-gray-700 dark:text-gray-300">{comment.content}</p>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{(user as any)?.firstName} {(user as any)?.lastName}</p>
-                          <p className="text-xs text-gray-500">Task created</p>
-                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-4 text-gray-500">
+                        <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">No comments yet. Start the conversation!</p>
                       </div>
-                    </div>
+                    )}
                   </div>
                   <div className="mt-3">
                     <Textarea
                       placeholder="Add a comment..."
                       rows={2}
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
                       data-testid="textarea-task-comment"
                     />
-                    <Button size="sm" className="mt-2" data-testid="button-add-comment">
+                    <Button 
+                      size="sm" 
+                      className="mt-2" 
+                      onClick={handleAddComment}
+                      disabled={!newComment.trim()}
+                      data-testid="button-add-comment"
+                    >
                       Add Comment
                     </Button>
                   </div>
