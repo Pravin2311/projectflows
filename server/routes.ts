@@ -157,6 +157,142 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Platform-managed OAuth URL generation (no user configuration required)
+  app.post("/api/auth/platform-oauth-url", async (req: any, res) => {
+    try {
+      const { scopes } = req.body;
+      
+      // Use platform's OAuth credentials or fall back to user credentials
+      const PLATFORM_CLIENT_ID = process.env.PLATFORM_GOOGLE_CLIENT_ID || req.session.googleConfig?.clientId;
+      if (!PLATFORM_CLIENT_ID) {
+        return res.status(400).json({ error: 'Platform OAuth not configured' });
+      }
+      
+      const redirectUri = `${req.protocol}://${req.get('host')}/platform-oauth-callback`;
+      
+      const params = new URLSearchParams({
+        client_id: PLATFORM_CLIENT_ID,
+        redirect_uri: redirectUri,
+        scope: scopes.join(' '),
+        response_type: 'code',
+        access_type: 'offline',
+        prompt: 'consent',
+        state: req.sessionID // Use session ID as state for security
+      });
+
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+      
+      res.json({ authUrl });
+    } catch (error) {
+      console.error('Platform OAuth URL generation error:', error);
+      res.status(500).json({ error: 'Failed to generate OAuth URL' });
+    }
+  });
+
+  // Platform OAuth callback handler
+  app.get("/platform-oauth-callback", async (req: any, res) => {
+    try {
+      const { code, error, state } = req.query;
+      
+      if (error) {
+        return res.send(`
+          <script>
+            window.opener.postMessage({ error: '${error}' }, '*');
+            window.close();
+          </script>
+        `);
+      }
+
+      if (!code) {
+        return res.send(`
+          <script>
+            window.opener.postMessage({ error: 'No authorization code received' }, '*');
+            window.close();
+          </script>
+        `);
+      }
+
+      // Exchange code for tokens using platform credentials or user credentials
+      const PLATFORM_CLIENT_ID = process.env.PLATFORM_GOOGLE_CLIENT_ID || req.session.googleConfig?.clientId;
+      const PLATFORM_CLIENT_SECRET = process.env.PLATFORM_GOOGLE_CLIENT_SECRET || req.session.googleConfig?.clientSecret;
+      
+      if (!PLATFORM_CLIENT_ID || !PLATFORM_CLIENT_SECRET) {
+        return res.send(`
+          <script>
+            window.opener.postMessage({ error: 'OAuth credentials not configured' }, '*');
+            window.close();
+          </script>
+        `);
+      }
+      
+      const redirectUri = `${req.protocol}://${req.get('host')}/platform-oauth-callback`;
+
+      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          client_id: PLATFORM_CLIENT_ID,
+          client_secret: PLATFORM_CLIENT_SECRET,
+          code: code,
+          grant_type: 'authorization_code',
+          redirect_uri: redirectUri,
+        }),
+      });
+
+      if (!tokenResponse.ok) {
+        const error = await tokenResponse.text();
+        console.error('Platform token exchange failed:', error);
+        return res.send(`
+          <script>
+            window.opener.postMessage({ error: 'Token exchange failed' }, '*');
+            window.close();
+          </script>
+        `);
+      }
+
+      const tokens = await tokenResponse.json();
+      
+      // Store tokens in session
+      req.session.googleTokens = {
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        scope: tokens.scope,
+        token_type: tokens.token_type,
+        expires_in: tokens.expires_in,
+        expires_at: Date.now() + (tokens.expires_in * 1000)
+      };
+
+      console.log('✅ Platform OAuth tokens successfully stored');
+      
+      // Send tokens back to parent window
+      res.send(`
+        <script>
+          window.opener.postMessage({ 
+            success: true, 
+            tokens: {
+              access_token: '${tokens.access_token}',
+              refresh_token: '${tokens.refresh_token}',
+              scope: '${tokens.scope}',
+              token_type: '${tokens.token_type}',
+              expires_in: ${tokens.expires_in}
+            }
+          }, '*');
+          window.close();
+        </script>
+      `);
+    } catch (error) {
+      console.error('Platform OAuth callback error:', error);
+      res.send(`
+        <script>
+          window.opener.postMessage({ error: 'OAuth callback failed' }, '*');
+          window.close();
+        </script>
+      `);
+    }
+  });
+
   // Update Google token from popup OAuth (legacy endpoint for compatibility)
   app.post('/api/auth/update-google-token', async (req: any, res) => {
     if (!req.session?.googleConfig) {

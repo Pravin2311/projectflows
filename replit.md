@@ -6,6 +6,13 @@ This is a completely free project management platform built with React and Expre
 
 ## Recent Changes (August 20, 2025)
 
+### Platform-Managed OAuth Implementation
+- **Zero End-User Configuration**: End users no longer need to configure Google Cloud Console OAuth settings
+- **Platform-Managed Credentials**: Platform owner configures OAuth once for all users with environment variables
+- **Universal Domain Support**: Works on localhost, Replit, production, and custom domains automatically
+- **Fallback Compatibility**: Still supports user-provided credentials for advanced users
+- **Production-Ready**: Environment variables PLATFORM_GOOGLE_CLIENT_ID and PLATFORM_GOOGLE_CLIENT_SECRET
+
 ### Gmail API Email Invitations
 - **Real Email Sending**: Complete Google Gmail API integration for sending actual email invitations
 - **Professional Templates**: Beautiful HTML email templates with project branding and invitation details
