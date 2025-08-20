@@ -107,7 +107,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         `&scope=${encodeURIComponent(scopes)}` +
         `&response_type=code` +
         `&access_type=offline` +
-        `&prompt=consent`;
+        `&prompt=consent` +
+        `&include_granted_scopes=false`; // Force re-consent for new scopes
+      
+      console.log('Generated Gmail reauth URL:', authUrl);
       
       res.json({ authUrl });
     } catch (error) {

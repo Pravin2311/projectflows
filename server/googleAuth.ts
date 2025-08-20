@@ -67,6 +67,8 @@ export class GoogleAuthService {
         'https://www.googleapis.com/auth/gmail.send',
       ],
       redirect_uri: redirectUri,
+      prompt: 'consent', // Force consent screen
+      include_granted_scopes: false // Don't include previously granted scopes
     });
   }
 
@@ -132,7 +134,8 @@ export function setupGoogleAuth(app: Express) {
         hasAccessToken: !!tokens.access_token,
         hasRefreshToken: !!tokens.refresh_token,
         hasIdToken: !!tokens.id_token,
-        scopes: tokens.scope
+        scopes: tokens.scope,
+        tokenPreview: tokens.access_token ? tokens.access_token.substring(0, 20) + '...' : 'none'
       });
 
       if (tokens.id_token) {
