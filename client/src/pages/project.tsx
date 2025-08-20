@@ -164,9 +164,10 @@ export default function ProjectPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/status'] });
     },
     onError: (error: Error) => {
+      console.error('Gmail authorization error:', error);
       toast({
         title: "Error",
-        description: "Failed to initialize Gmail authorization.",
+        description: `Failed to initialize Gmail authorization: ${error.message}`,
         variant: "destructive",
       });
     },
