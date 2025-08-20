@@ -43,6 +43,8 @@ export const projectSchema = z.object({
   budget: z.number().optional(),
   spentBudget: z.number().default(0),
   templateId: z.string().optional(), // Reference to project template
+  // Shared Google API configuration - set by project owner, inherited by team members
+  googleApiConfig: googleApiConfigSchema.optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -52,6 +54,7 @@ export const insertProjectSchema = projectSchema.omit({
   id: true,
   driveFileId: true,
   memberEmails: true,
+  googleApiConfig: true, // Will be added later by owner
   createdAt: true,
   updatedAt: true,
 });

@@ -29,7 +29,7 @@ export interface IStorage {
   createProject(project: InsertProject): Promise<Project>;
   getProject(id: string): Promise<Project | undefined>;
   getUserProjects(userId: string): Promise<Project[]>;
-  updateProject(id: string, updates: Partial<InsertProject>): Promise<Project>;
+  updateProject(id: string, updates: Partial<Project>): Promise<Project>;
   deleteProject(id: string): Promise<void>;
   
   // Project member operations
@@ -134,7 +134,7 @@ export class MemStorage implements IStorage {
       .filter(Boolean) as Project[];
   }
 
-  async updateProject(id: string, updates: Partial<InsertProject>): Promise<Project> {
+  async updateProject(id: string, updates: Partial<Project>): Promise<Project> {
     const existing = this.projects.get(id);
     if (!existing) throw new Error("Project not found");
     

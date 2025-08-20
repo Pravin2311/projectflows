@@ -6,6 +6,14 @@ This is a completely free project management platform built with React and Expre
 
 ## Recent Changes (August 20, 2025)
 
+### Major UX Improvement: Shared Google API Configuration (August 20, 2025) ✅
+- **Problem Solved**: Previously every team member needed their own Google API setup - terrible UX!
+- **New Architecture**: Project owners set up Google API credentials once, team members inherit automatically
+- **Team Onboarding**: Invited members now just sign in with Google - no API configuration required
+- **Shared Costs**: All Google API usage bills to project owner's account - simplified cost management
+- **Backend Changes**: Projects now store Google API config, auth system checks for inherited configuration
+- **UX Enhancement**: Clear messaging in UI about configuration inheritance for team owners
+
 ### Completely Free Model Implementation Complete (August 20, 2025) ✅
 - **Architecture Pivot**: Platform now completely free with user-provided Google AI API keys
 - **Removed Functionality**: All subscription tiers, Stripe integration, payment processing eliminated

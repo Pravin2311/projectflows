@@ -29,6 +29,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Simple auth routes for development
   app.get('/api/auth/status', async (req: any, res) => {
     let hasGmailScope = false;
+    let hasGoogleConfig = !!req.session?.googleConfig;
+    
+    // If authenticated but no Google config, check if user can inherit from any project
+    if (req.session?.user && !hasGoogleConfig) {
+      try {
+        const userId = req.session.user.id;
+        const projects = await storage.getUserProjects(userId);
+        
+        // Check if any project has Google configuration that user can inherit
+        const projectWithConfig = projects.find(project => 
+          project.googleApiConfig && project.ownerId !== userId
+        );
+        
+        if (projectWithConfig) {
+          // Auto-inherit configuration from first available project
+          req.session.googleConfig = projectWithConfig.googleApiConfig;
+          hasGoogleConfig = true;
+        }
+      } catch (error) {
+        console.error('Error checking project configs:', error);
+      }
+    }
     
     // Check if we have access token and verify Gmail scope
     if (req.session?.googleTokens?.access_token) {
@@ -49,7 +71,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     res.json({
       isAuthenticated: !!req.session?.user,
-      hasGoogleConfig: !!req.session?.googleConfig,
+      hasGoogleConfig,
       hasGmailScope,
       clientId: req.session?.googleConfig?.clientId, // Needed for popup OAuth
       user: req.session?.user || null
@@ -416,6 +438,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // New endpoint: Inherit Google configuration from project for team members
+  app.post('/api/auth/inherit-project-config', isAuthenticated, async (req: any, res) => {
+    try {
+      const { projectId } = req.body;
+      const userId = req.session.user.id;
+      
+      // Check if user is a member of this project
+      const membership = await storage.getUserProjectRole(projectId, userId);
+      if (!membership) {
+        return res.status(403).json({ error: "Access denied to this project" });
+      }
+      
+      // Get project with its Google configuration
+      const project = await storage.getProject(projectId);
+      if (!project || !project.googleApiConfig) {
+        return res.status(404).json({ error: "Project Google configuration not found" });
+      }
+      
+      // Inherit the project owner's Google config
+      req.session.googleConfig = project.googleApiConfig;
+      
+      res.json({ 
+        success: true, 
+        message: "Inherited project Google configuration", 
+        hasGoogleConfig: true 
+      });
+    } catch (error) {
+      console.error('Error inheriting project config:', error);
+      res.status(500).json({ error: 'Failed to inherit project configuration' });
+    }
+  });
+
   // Usage tracking for user's own API usage monitoring
   app.get('/api/usage', isAuthenticated, async (req: any, res) => {
     try {
@@ -434,6 +488,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/projects", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.session.user.id;
+      const googleConfig = req.session.googleConfig;
+      
       const baseData = {
         ...req.body,
         ownerId: userId,
@@ -443,6 +499,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const projectData = insertProjectSchema.parse(baseData);
       
       const project = await storage.createProject(projectData);
+      
+      // Store Google API configuration with the project for sharing with team members
+      if (googleConfig) {
+        await storage.updateProject(project.id, { googleApiConfig: googleConfig });
+      }
       
       // Create activity
       await storage.createActivity({

@@ -52,6 +52,16 @@ export function GoogleConfig({ onConfigSubmit, isLoading = false }: GoogleConfig
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl space-y-6">
+        {/* Notice about team member inheritance */}
+        <Alert className="bg-blue-50 border-blue-200">
+          <Shield className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800">
+            <strong>For team owners:</strong> After you set up your Google API credentials, 
+            team members you invite will automatically inherit your configuration. 
+            They won't need to set up their own credentials - just sign in with Google!
+          </AlertDescription>
+        </Alert>
+
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center space-x-3 mb-4">
