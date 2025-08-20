@@ -164,10 +164,10 @@ export default function Landing() {
                 variant="outline" 
                 size="lg"
                 className="text-lg px-8"
-                onClick={() => window.location.href = "/pricing"}
-                data-testid="button-view-pricing"
+                onClick={() => window.location.href = "#features"}
+                data-testid="button-view-features"
               >
-                View Premium Features
+                Explore Features
               </Button>
             </div>
           </div>
@@ -178,59 +178,59 @@ export default function Landing() {
       <section className="py-16 bg-blue-50 dark:bg-blue-900/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="max-w-4xl mx-auto">
-            <div className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-full text-sm font-medium mb-6">
+            <div className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-full text-sm font-medium mb-6">
               <Shield className="h-4 w-4 mr-2" />
-              Your Data, Your Rules
+              100% Free Forever
             </div>
             
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
-              Skip the Technical Setup
+              Your Google Ecosystem, Your Control
             </h2>
             
             <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-              Don't want to deal with Google API keys and OAuth configuration? 
-              Our Managed API service handles all the technical complexity for just <strong>$9/month</strong>.
+              Complete project management powered by your own Google services. 
+              No platform fees, no subscriptions - just <strong>your own API costs directly to Google</strong>.
             </p>
             
             <div className="grid md:grid-cols-3 gap-6 mb-8">
               <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
-                <div className="text-blue-600 mb-3">
-                  <Settings className="h-8 w-8 mx-auto" />
+                <div className="text-green-600 mb-3">
+                  <CheckCircle className="h-8 w-8 mx-auto" />
                 </div>
-                <h3 className="font-semibold mb-2">Zero Configuration</h3>
+                <h3 className="font-semibold mb-2">Zero Platform Costs</h3>
                 <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  No Google API setup required. Start using immediately.
+                  Platform is completely free. You only pay Google for your API usage.
                 </p>
               </div>
               
               <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
-                <div className="text-blue-600 mb-3">
+                <div className="text-green-600 mb-3">
+                  <Cloud className="h-8 w-8 mx-auto" />
+                </div>
+                <h3 className="font-semibold mb-2">Your Data Ownership</h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  All project data stored in your own Google Drive.
+                </p>
+              </div>
+              
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
+                <div className="text-green-600 mb-3">
                   <Zap className="h-8 w-8 mx-auto" />
                 </div>
-                <h3 className="font-semibold mb-2">Higher Limits</h3>
+                <h3 className="font-semibold mb-2">AI-Powered Insights</h3>
                 <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  10x more API calls than free Google tier.
-                </p>
-              </div>
-              
-              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm">
-                <div className="text-blue-600 mb-3">
-                  <Shield className="h-8 w-8 mx-auto" />
-                </div>
-                <h3 className="font-semibold mb-2">Data Still Yours</h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
-                  Your projects remain in your Google Drive.
+                  Google Gemini AI insights with your own API key.
                 </p>
               </div>
             </div>
             
             <Button 
               size="lg"
-              className="bg-blue-600 hover:bg-blue-700 text-lg px-8"
-              onClick={() => window.location.href = "/pricing"}
-              data-testid="button-managed-api-cta"
+              className="bg-green-600 hover:bg-green-700 text-lg px-8"
+              onClick={handleLogin}
+              data-testid="button-get-started-free"
             >
-              Try Managed API Service
+              Get Started - Completely Free
               <ArrowRight className="h-5 w-5 ml-2" />
             </Button>
           </div>
@@ -238,7 +238,7 @@ export default function Landing() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-white/50">
+      <section id="features" className="py-20 bg-white/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">

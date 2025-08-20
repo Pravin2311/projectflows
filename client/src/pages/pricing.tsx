@@ -1,257 +1,208 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Star, Zap, Crown, ArrowRight } from "lucide-react";
+import { Check, Cloud, Zap, Shield, ArrowRight, CheckCircle, Key, Database, Users, Settings, Calendar, MessageSquare, FileText, BarChart3, Bot } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { Elements } from '@stripe/react-stripe-js';
-import { loadStripe } from '@stripe/stripe-js';
 
-// Load Stripe
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY || '');
+export default function Features() {
+  const { isAuthenticated } = useAuth();
 
-export default function Pricing() {
-  const { user, isAuthenticated } = useAuth();
-  const { toast } = useToast();
-  const [isUpgrading, setIsUpgrading] = useState<string | null>(null);
-
-  const { data: plans = [], isLoading } = useQuery<Array<{
-    id: string;
-    name: string;
-    amount: number;
-    currency: string;
-    interval: string;
-    features: string[];
-  }>>({
-    queryKey: ["/api/subscription/plans"],
-  });
-
-  const handleUpgrade = async (planId: string) => {
+  const handleGetStarted = () => {
     if (!isAuthenticated) {
       window.location.href = "/api/login";
       return;
     }
-
-    if (planId === 'free') {
-      return;
-    }
-
-    setIsUpgrading(planId);
-    try {
-      // Create payment intent
-      const response = await apiRequest("POST", "/api/create-payment-intent", { planId });
-      const data = await response.json();
-      
-      if (data.clientSecret) {
-        // Store the client secret and plan info for the checkout
-        sessionStorage.setItem('stripe_client_secret', data.clientSecret);
-        sessionStorage.setItem('stripe_plan_id', planId);
-        
-        // Navigate to a simple checkout page
-        window.location.href = `/checkout?planId=${planId}`;
-      } else {
-        throw new Error(data.message || 'Failed to create payment intent');
-      }
-    } catch (error: any) {
-      // Handle specific Stripe configuration error
-      if (error.message?.includes('Stripe not configured')) {
-        toast({
-          title: "Payment System Not Ready",
-          description: "Stripe payments are being set up. Please try again later or contact support.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Upgrade Failed",
-          description: error.message || "Please try again or contact support.",
-          variant: "destructive",
-        });
-      }
-    } finally {
-      setIsUpgrading(null);
-    }
+    window.location.href = "/";
   };
 
-  const getPlanIcon = (tier: string) => {
-    switch (tier) {
-      case "free": return <Star className="h-6 w-6" />;
-      case "premium": return <Crown className="h-6 w-6" />;
-      default: return <Star className="h-6 w-6" />;
+  const features = [
+    {
+      icon: <Cloud className="h-6 w-6" />,
+      title: "Google Drive Integration",
+      description: "All project data stored securely in your own Google Drive with real-time sync"
+    },
+    {
+      icon: <Users className="h-6 w-6" />,
+      title: "Team Collaboration",
+      description: "Invite team members, assign tasks, and collaborate with role-based permissions"
+    },
+    {
+      icon: <Calendar className="h-6 w-6" />,
+      title: "Advanced Time Tracking",
+      description: "Built-in timers, manual time entry, and comprehensive time analytics"
+    },
+    {
+      icon: <MessageSquare className="h-6 w-6" />,
+      title: "Rich Comments System",
+      description: "@ mentions, # task links, file attachments, and interactive discussions"
+    },
+    {
+      icon: <FileText className="h-6 w-6" />,
+      title: "Kanban Boards",
+      description: "Drag-and-drop task management with custom columns and workflow states"
+    },
+    {
+      icon: <BarChart3 className="h-6 w-6" />,
+      title: "Project Analytics",
+      description: "Visual progress tracking, completion rates, and team performance insights"
+    },
+    {
+      icon: <Bot className="h-6 w-6" />,
+      title: "AI-Powered Insights",
+      description: "Google Gemini AI analysis using your own API key for project optimization"
+    },
+    {
+      icon: <Shield className="h-6 w-6" />,
+      title: "Data Privacy",
+      description: "Complete data ownership - your projects never leave your Google Drive"
     }
-  };
-
-  const getCurrentUserTier = () => {
-    return (user as any)?.subscriptionTier || "free";
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-            Simple, Transparent Pricing
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      {/* Header */}
+      <div className="pt-16 pb-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-full text-sm font-medium mb-6">
+            <CheckCircle className="h-4 w-4 mr-2" />
+            100% Free Forever
+          </div>
+          
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
+            Complete Project Management
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            Start completely free. Upgrade to Premium when you want advanced AI features. All plans keep your data in your Google Drive.
+          
+          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-8">
+            Everything you need to manage projects effectively, powered by your own Google ecosystem. 
+            No subscriptions, no platform fees - just your own API costs directly to Google.
           </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <Button 
+              onClick={handleGetStarted}
+              size="lg"
+              className="bg-green-600 hover:bg-green-700 text-lg px-8"
+              data-testid="button-get-started"
+            >
+              <Cloud className="h-5 w-5 mr-2" />
+              Get Started - Free Forever
+              <ArrowRight className="h-5 w-5 ml-2" />
+            </Button>
+          </div>
+
+          {/* Cost Transparency Card */}
+          <Card className="max-w-2xl mx-auto mb-16 border-green-200 bg-green-50/50 dark:bg-green-900/20">
+            <CardHeader>
+              <CardTitle className="text-green-800 dark:text-green-200 flex items-center justify-center">
+                <Key className="h-5 w-5 mr-2" />
+                Transparent Pricing Model
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 text-sm text-green-700 dark:text-green-300">
+                <div className="flex items-center">
+                  <Check className="h-4 w-4 mr-2 text-green-600" />
+                  <span><strong>Platform Cost:</strong> $0/month (Free Forever)</span>
+                </div>
+                <div className="flex items-center">
+                  <Check className="h-4 w-4 mr-2 text-green-600" />
+                  <span><strong>Google API Costs:</strong> ~$1-5/month (paid directly to Google)</span>
+                </div>
+                <div className="flex items-center">
+                  <Check className="h-4 w-4 mr-2 text-green-600" />
+                  <span><strong>AI Insights:</strong> Your own Gemini API key = your cost control</span>
+                </div>
+              </div>
+              <p className="text-xs text-green-600 mt-4">
+                You control 100% of costs by providing your own Google API credentials
+              </p>
+            </CardContent>
+          </Card>
         </div>
+      </div>
 
-        {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 gap-8 mb-16 max-w-4xl mx-auto">
-          {plans.filter(plan => plan.id === "free" || plan.id === "premium").map((plan) => {
-            const currentTier = getCurrentUserTier();
-            const isCurrentPlan = plan.id === currentTier;
-            const isUpgrade = plan.id !== "free" && currentTier === "free";
-            
-            return (
-              <Card 
-                key={plan.id} 
-                className={`relative ${plan.id === "premium" ? "border-blue-500 shadow-lg scale-105" : ""} ${isCurrentPlan ? "bg-blue-50 dark:bg-blue-900/20" : ""}`}
-                data-testid={`plan-card-${plan.id}`}
-              >
-                {plan.id === "premium" && (
-                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-600">
-                    Advanced Features
-                  </Badge>
-                )}
-                
-                <CardHeader className="text-center pb-8">
-                  <div className="flex justify-center mb-4 text-blue-600">
-                    {getPlanIcon(plan.id)}
+      {/* Features Grid */}
+      <section className="py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+              Everything Included
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-300">
+              Professional project management features at zero platform cost
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map((feature, index) => (
+              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+                <CardHeader>
+                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mb-4 text-blue-600 dark:text-blue-400">
+                    {feature.icon}
                   </div>
-                  
-                  <CardTitle className="text-2xl mb-2">{plan.name}</CardTitle>
-                  <CardDescription className="text-lg mb-4">
-                    {plan.id === "free" && "Complete project management platform - forever free"}
-                    {plan.id === "premium" && "Advanced AI features and priority support"}
-                  </CardDescription>
-                  
-                  <div className="text-center">
-                    <span className="text-4xl font-bold">${(plan.amount / 100).toFixed(0)}</span>
-                    <span className="text-gray-500 dark:text-gray-400">/month</span>
-                  </div>
+                  <CardTitle className="text-lg">{feature.title}</CardTitle>
                 </CardHeader>
-
                 <CardContent>
-                  <ul className="space-y-3 mb-8">
-                    {plan.features.map((feature: string, index: number) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <Check className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Button
-                    className="w-full"
-                    data-testid={`button-${plan.id}-upgrade`}
-                    variant={plan.id === "managed_api" ? "default" : "outline"}
-                    disabled={isCurrentPlan || isUpgrading === plan.id || plan.id === 'free'}
-                    onClick={() => handleUpgrade(plan.id)}
-                  >
-                    {isUpgrading === plan.id ? (
-                      <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                    ) : (
-                      <>
-                        {isCurrentPlan ? "Current Plan" : 
-                         plan.id === 'free' ? "Get Started" :
-                         isUpgrade ? "Upgrade with Stripe" : "Subscribe with Stripe"}
-                        {!isCurrentPlan && plan.id !== 'free' && <ArrowRight className="h-4 w-4 ml-2" />}
-                      </>
-                    )}
-                  </Button>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">
+                    {feature.description}
+                  </p>
                 </CardContent>
               </Card>
-            );
-          })}
-        </div>
-
-        {/* Value Propositions */}
-        <div className="grid md:grid-cols-2 gap-12 mb-16">
-          <div>
-            <h3 className="text-2xl font-bold mb-4">Why Choose Premium?</h3>
-            <ul className="space-y-3">
-              <li className="flex items-start gap-3">
-                <Check className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" />
-                <div>
-                  <strong>Advanced AI Insights</strong> - Google Gemini AI analyzes your projects for intelligent recommendations
-                </div>
-              </li>
-              <li className="flex items-start gap-3">
-                <Check className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" />
-                <div>
-                  <strong>Custom Automations</strong> - Set up workflows and automated task management
-                </div>
-              </li>
-              <li className="flex items-start gap-3">
-                <Check className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" />
-                <div>
-                  <strong>Priority Support</strong> - Direct access to our support team
-                </div>
-              </li>
-              <li className="flex items-start gap-3">
-                <Check className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" />
-                <div>
-                  <strong>Data Still Yours</strong> - Your projects remain in your Google Drive
-                </div>
-              </li>
-            </ul>
+            ))}
           </div>
+        </div>
+      </section>
 
-          <div>
-            <h3 className="text-2xl font-bold mb-4">Frequently Asked Questions</h3>
-            <div className="space-y-4">
-              <div>
-                <strong className="block mb-1">Can I cancel anytime?</strong>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Yes, cancel anytime. Your data stays in your Google Drive even after cancellation.
-                </p>
+      {/* Setup Requirements */}
+      <section className="py-16 bg-white/50 dark:bg-gray-800/50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+            Simple 5-Minute Setup
+          </h2>
+          
+          <div className="grid md:grid-cols-3 gap-8 mb-8">
+            <div className="space-y-3">
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto text-blue-600 dark:text-blue-400 font-bold">
+                1
               </div>
-              <div>
-                <strong className="block mb-1">What happens to my data?</strong>
-                <p className="text-gray-600 dark:text-gray-400">
-                  All your data remains in your Google Drive. We never store or have access to your project data.
-                </p>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Create Google Project</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Free Google Cloud Console project with Drive and Gmail APIs
+              </p>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto text-blue-600 dark:text-blue-400 font-bold">
+                2
               </div>
-              <div>
-                <strong className="block mb-1">Can I switch plans?</strong>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Yes, upgrade or downgrade anytime. Changes take effect immediately.
-                </p>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Get API Keys</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Copy your API credentials and optional Gemini AI key
+              </p>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto text-blue-600 dark:text-blue-400 font-bold">
+                3
               </div>
+              <h3 className="font-semibold text-gray-900 dark:text-white">Start Managing</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Connect and start creating projects immediately
+              </p>
             </div>
           </div>
-        </div>
 
-        {/* Footer CTA */}
-        <div className="text-center bg-blue-600 text-white rounded-lg p-8">
-          <h3 className="text-2xl font-bold mb-4">Ready to Get Started?</h3>
-          <p className="text-xl mb-6">
-            Join thousands of teams using ProjectFlow for their project management needs.
-          </p>
-          <Button
+          <Button 
+            onClick={handleGetStarted}
             size="lg"
-            variant="secondary"
-            onClick={() => window.location.href = isAuthenticated ? "/dashboard" : "/api/login"}
-            data-testid="button-cta-start"
+            className="bg-blue-600 hover:bg-blue-700 text-lg px-8"
+            data-testid="button-setup-now"
           >
-            {isAuthenticated ? "Go to Dashboard" : "Start Free Today"}
+            Start Setup Now
             <ArrowRight className="h-5 w-5 ml-2" />
           </Button>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
