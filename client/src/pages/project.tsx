@@ -683,7 +683,7 @@ export default function ProjectPage() {
 
       {/* Task Detail Popup */}
       <Dialog open={isTaskDetailOpen} onOpenChange={setIsTaskDetailOpen}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               <span>{selectedTask?.title}</span>
@@ -694,7 +694,7 @@ export default function ProjectPage() {
           </DialogHeader>
           
           {selectedTask && (
-            <div className="space-y-6">
+            <div className="space-y-6 pb-4">
               <div className="flex items-center space-x-4">
                 <Badge className={`${statusConfig[selectedTask.status].color} text-white`}>
                   {statusConfig[selectedTask.status].label}
@@ -711,7 +711,7 @@ export default function ProjectPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
                   <h4 className="font-medium text-gray-900 dark:text-white mb-2">Task Details</h4>
                   <div className="space-y-2 text-sm">
@@ -829,25 +829,29 @@ export default function ProjectPage() {
               <div>
                 <h4 className="font-medium text-gray-900 dark:text-white mb-2">Comments</h4>
                 <div className="space-y-3">
-                  <div className="border rounded-lg p-3">
-                    <div className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm">
-                        {(user as any)?.firstName?.[0] || 'U'}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{(user as any)?.firstName} {(user as any)?.lastName}</p>
-                        <p className="text-xs text-gray-500">Task created</p>
+                  <div className="max-h-40 overflow-y-auto space-y-3">
+                    <div className="border rounded-lg p-3">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm">
+                          {(user as any)?.firstName?.[0] || 'U'}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{(user as any)?.firstName} {(user as any)?.lastName}</p>
+                          <p className="text-xs text-gray-500">Task created</p>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <Textarea
-                    placeholder="Add a comment..."
-                    rows={2}
-                    data-testid="textarea-task-comment"
-                  />
-                  <Button size="sm" data-testid="button-add-comment">
-                    Add Comment
-                  </Button>
+                  <div className="mt-3">
+                    <Textarea
+                      placeholder="Add a comment..."
+                      rows={2}
+                      data-testid="textarea-task-comment"
+                    />
+                    <Button size="sm" className="mt-2" data-testid="button-add-comment">
+                      Add Comment
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
