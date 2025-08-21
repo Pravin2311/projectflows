@@ -1,0 +1,54 @@
+[debug] [2025-08-21T08:16:18.854Z] ----------------------------------------------------------------------
+[debug] [2025-08-21T08:16:18.856Z] Command:       /nix/store/ws50yvm6vzlzf7jzz6n7xh4szddrack1-nodejs-20.19.1/bin/node /nix/store/4ba3nh7p56fsnidgr9jcqnpv4k7nwwrv-firebase-tools-14.12.0/lib/node_modules/firebase-tools/lib/bin/firebase.js init hosting
+[debug] [2025-08-21T08:16:18.857Z] CLI Version:   14.12.0
+[debug] [2025-08-21T08:16:18.857Z] Platform:      linux
+[debug] [2025-08-21T08:16:18.857Z] Node Version:  v20.19.1
+[debug] [2025-08-21T08:16:18.858Z] Time:          Thu Aug 21 2025 08:16:18 GMT+0000 (Coordinated Universal Time)
+[debug] [2025-08-21T08:16:18.858Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-08-21T08:16:18.863Z] Checked if tokens are valid: true, expires at: 1755766993681
+[debug] [2025-08-21T08:16:18.864Z] Checked if tokens are valid: true, expires at: 1755766993681
+[debug] [2025-08-21T08:16:18.867Z] >>> [apiv2][query] GET https://monospace-pa.googleapis.com/v1/workspaces/projectflows-90205145 [none]
+[debug] [2025-08-21T08:16:20.027Z] <<< [apiv2][status] GET https://monospace-pa.googleapis.com/v1/workspaces/projectflows-90205145 200
+[debug] [2025-08-21T08:16:20.027Z] <<< [apiv2][body] GET https://monospace-pa.googleapis.com/v1/workspaces/projectflows-90205145 {"workspaceId":"projectflows-90205145","name":"projectflows","workspaceRedirectUrl":"firebase-projectflows-1755761137813.cluster-yylgzpipxrar4v4a72liastuqy.cloudworkstations.dev","status":"WORKSPACE_STATUS_RUNNING","lastAccessDatetime":"2025-08-21T07:25:55.692859Z","workspaceTemplate":"WORKSPACE_TEMPLATE_BLANK_WEB","owner":"SELF","serviceAccountEmail":"msp-6232218856716948052@monospace-per-ws-sa-4.iam.gserviceaccount.com","gitRepoUrl":"https://github.com/Pravin2311/projectflows","enableNix":true,"ownerEmail":"mydomain2311@gmail.com","workstationAccessToken":"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL2Nsb3VkLmdvb2dsZS5jb20vd29ya3N0YXRpb25zIiwiYXVkIjoiZmlyZWJhc2UtcHJvamVjdGZsb3dzLTE3NTU3NjExMzc4MTMuY2x1c3Rlci15eWxnenBpcHhyYXI0djRhNzJsaWFzdHVxeS5jbG91ZHdvcmtzdGF0aW9ucy5kZXYiLCJpYXQiOjE3NTU3NjQxNzksImV4cCI6MTc1NTg1MDU3OX0.ClrVYrPj-N48EvIvIWBfrQRlX7Kz3p2EeaG34InlmyQpzajlHFFYpPFxN0_3xk9eNYvxX5g-uYuqP6T_4EVvPL2eUeP_wNkN-YcAc3D3YI8Mi_jKkqxJs329sCm8N0xJgOe9FU95LVTap-nf6rARW8wZHWLmlW6l5JdzGNj03rmADsiE4yTK72NPT0s-LnlvNxbWeQyQq8jTdf-yZo-hiac7LJaUZe50pb_TRxQY3YtMjbHEvGCdBrcJ_YJ40GS4LUEPZLvYjfTSp-XR1Z4CUaNIkfT8CBI7xYKQt8lqpHGJvPIPuhSu273TZtPySzHM8NDyPBJ83qeu6DJCg_hp9Q"}
+[debug] [2025-08-21T08:16:20.028Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/userinfo.email"]
+[debug] [2025-08-21T08:16:20.028Z] > authorizing via signed-in user (mydomain2311@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /home/user/projectflows
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] but for now we'll just set up a default project.
+[info] 
+[debug] [2025-08-21T08:16:28.475Z] Checked if tokens are valid: true, expires at: 1755766993681
+[debug] [2025-08-21T08:16:28.475Z] Checked if tokens are valid: true, expires at: 1755766993681
+[debug] [2025-08-21T08:16:28.476Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=100
+[debug] [2025-08-21T08:16:28.942Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2025-08-21T08:16:28.943Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[info] i  Using project projectflow-2311 (taskflow) 
+[info] 
+=== Hosting Setup
+[debug] [2025-08-21T08:16:32.649Z] Checked if tokens are valid: true, expires at: 1755766993681
+[debug] [2025-08-21T08:16:32.650Z] Checked if tokens are valid: true, expires at: 1755766993681
+[debug] [2025-08-21T08:16:32.650Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/projectflow-2311 [none]
+[debug] [2025-08-21T08:16:32.893Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/projectflow-2311 200
+[debug] [2025-08-21T08:16:32.894Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/projectflow-2311 {"projectId":"projectflow-2311","projectNumber":"698987425039","displayName":"taskflow","name":"projects/projectflow-2311","resources":{"hostingSite":"projectflow-2311"},"state":"ACTIVE","etag":"1_bfb58aad-792d-4f3b-bd27-d29c3731f02a"}
+[info] 
+[info] i  Detected a .git folder at /home/user/projectflows 
+[info] i  Authorizing with GitHub to upload your service account to a GitHub repository's secrets store. 
+[info] 
+[info] Visit this URL on this device to log in:
+[info] https://github.com/login/oauth/authorize?client_id=89cf50f02ac6aaed3484&state=751280370&redirect_uri=http%3A%2F%2Flocalhost%3A9005&scope=read%3Auser%20repo%20public_repo
+[info] 
+[info] Waiting for authentication...
